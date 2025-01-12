@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тварини</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <h1 class="header-title">VetAN</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Список тварин</a>
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <form action="/search" method="GET" class="search-form">
+            <label for="search-id">Пошук за ID:</label>
+            <input type="text" id="search-id" name="id" placeholder="Введіть ID">
+            <button type="submit" class="search-button">Шукати</button>
+        </form>
+
+        <div class="main-header">
+            <h2>Список тварин</h2>
+            <a href="/add-animal" class="add-button">Додати Тварину</a>
+        </div>
+        <table class="animals-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Імʼя</th>
+                    <th>Вид</th>
+                    <th>Дата народження</th>
+                    <th>Стать</th>
+                    <th>Вакцинація</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% animals.forEach(function(animal) { %>
+                    <tr>
+                        <td><%= animal.animals_id %></td>
+                        <td><%= animal.name %></td>
+                        <td><%= animal.breed %></td>
+                        <td>
+                            <% 
+                                const birthday = new Date(animal.birthday);
+                                const formattedDate = 
+                                    ('0' + birthday.getDate()).slice(-2) + '-' +
+                                    ('0' + (birthday.getMonth() + 1)).slice(-2) + '-' +
+                                    birthday.getFullYear();
+                            %>
+                            <%= formattedDate %>
+                        </td>
+                        <td><%= animal.gender %></td>
+                        <td><%= animal.vaccination ? "Так" : "Ні" %></td>
+                        <td>
+                            <a href="/animal-history/<%= animal.animals_id %>" class="action-button1">Історія</a>
+                            <a href="/update/<%= animal.animals_id %>" class="action-button">Оновити</a>
+                            <form action="/delete/<%= animal.animals_id %>" method="POST" style="display:inline;">
+                                <form action="/delete/<%= animal.animals_id %>" method="POST" style="display:inline;">
+                                    <button type="submit" class="delete-button">Видалити</button></form>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </main>
+
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>

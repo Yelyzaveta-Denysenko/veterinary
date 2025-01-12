@@ -1,0 +1,27 @@
+<form action="/edit-appointment/<%= appointment.appointment_id %>" method="POST" class="appointment-form">
+    <label for="animal">Тварина:</label>
+    <select id="animal" name="animal_id" required>
+        <% animals.forEach(function(animal) { %>
+            <option value="<%= animal.animals_id %>" <%= animal.animals_id === appointment.animals_id ? "selected" : "" %>>
+                <%= animal.name %>
+            </option>
+        <% }); %>
+    </select>
+
+    <label for="service">Послуга:</label>
+    <select id="service" name="service_id" required>
+        <% services.forEach(function(service) { %>
+            <option value="<%= service.services_id %>" <%= service.services_id === appointment.services_id ? "selected" : "" %>>
+                <%= service.services_name %>
+            </option>
+        <% }); %>
+    </select>
+
+    <label for="appointment-date">Дата:</label>
+    <input type="date" id="appointment-date" name="appointment_date" value="<%= appointment.appointment_date.toISOString().split('T')[0] %>" required>
+
+    <label for="appointment-time">Час:</label>
+    <input type="time" id="appointment-time" name="appointment_time" value="<%= appointment.appointment_time %>" required>
+
+    <button type="submit" class="submit-button">Оновити</button>
+</form>

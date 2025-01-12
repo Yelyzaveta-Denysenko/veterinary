@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Всі записи на прийом</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <h1 class="header-title">VetAN</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Список тварин</a>
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="appointments-list">
+        <h1>Всі записи на прийом</h1>
+
+        <form action="/appointments" method="GET" class="filter-form">
+            <label for="status">Фільтрувати за статусом:</label>
+            <select name="status" id="status">
+                <option value="">Всі</option>
+                <option value="Scheduled">Очікує</option>
+                <option value="Completed">Завершено</option>
+                <option value="Cancelled">Скасовано</option>
+                <option value="In progress">В процесі</option>
+                <option value="Not paid">Очікує оплату</option>
+            </select>
+            <button type="submit">Застосувати</button>
+        </form>
+        
+        <% if (appointments.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Тварина</th>
+                        <th>Послуга</th>
+                        <th>Дата</th>
+                        <th>Час</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% appointments.forEach(function(appointment) { %>
+                        <% if (!filterStatus || appointment.status === filterStatus) { %>
+                            <tr>
+                                <td><%= appointment.animal_name %></td>
+                                <td><%= appointment.service_name %></td>
+                                <td><%= appointment.date %></td>
+                                <td><%= appointment.time %></td>
+                                <td><%= appointment.status %></td>
+                                <td>
+                                    <% if (appointment.status === 'Scheduled') { %>
+                                        <form action="/appointments/start/<%= appointment.id %>" method="POST" style="display:inline;" onsubmit="openNewTabAndSubmit(event, '<%= appointment.id %>')">
+                                            <button type="submit" class="btn btn-start">Почати</button>
+                                        </form>
+                                        <form action="/appointments/cancel/<%= appointment.id %>" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-cancel" onclick="return confirm('Ви впевнені, що хочете скасувати цей прийом?');">Скасувати</button>
+                                        </form>
+                                    <% } else if (appointment.status === 'In progress') { %>
+                                        <form style="display:inline;" onsubmit="openInProgressTab(event, '<%= appointment.id %>')">
+                                            <button type="submit" class="btn btn-progress">Переглянути</button>
+                                        </form>
+                                        <form action="/appointments/cancel/<%= appointment.id %>" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-cancel" onclick="return confirm('Ви впевнені, що хочете скасувати цей прийом?');">Скасувати</button>
+                                        </form>
+                                    <% } else if (appointment.status === 'Not paid') { %>
+                                        <form style="display:inline;" onsubmit="openAddPaymentPage(event, '<%= appointment.id %>')">
+                                            <button type="submit" class="btn btn-payment">Додати оплату</button>
+                                        </form>
+                                    <% } else if (appointment.status === 'Completed') { %>
+                                        <form style="display:inline;" onclick="openDetailsPage(event, '<%= appointment.id %>')">
+                                            <button type="button" class="btn btn-inspect">Переглянути</button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% } %>
+                    <% }); %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p>Немає записів на прийом.</p>
+        <% } %>
+    </main>
+
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>
+
+<script>
+    async function openNewTabAndSubmit(event, appointmentId) {
+        event.preventDefault();
+
+        const newTab = window.open('', '_blank'); 
+
+        try {
+            const response = await fetch(`/appointments/start/${appointmentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Помилка під час оновлення статусу прийому.');
+            }
+
+            const data = await response.json();
+            const newPageUrl = data.url;
+
+            newTab.location.href = newPageUrl;
+
+            window.location.reload();
+        } catch (error) {
+            console.error(error);
+            alert('Не вдалося почати прийом. Спробуйте ще раз.');
+            newTab.close(); 
+        }
+    }
+
+    async function openInProgressTab(event, appointmentId) {
+        event.preventDefault();
+
+        // Open the new tab directly
+        const newTabUrl = `/appointments/in-progress/${appointmentId}`;
+        const newTab = window.open(newTabUrl, '_blank');
+
+        // Optional: Refresh the current tab to keep it updated
+        window.location.reload();
+    }
+
+    function openAddPaymentPage(event, appointmentId) {
+        event.preventDefault();
+
+        const newTabUrl = `/appointments/payment/${appointmentId}`;
+        window.open(newTabUrl, '_blank');
+    }
+
+    function openDetailsPage(event, appointmentId) {
+        const newTabUrl = `/appointments/details/${appointmentId}`;
+        window.open(newTabUrl, '_blank');
+    }
+</script>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Історія Тварини</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <h1 class="header-title">Медична Історія</h1>
+            <div class="nav-links">
+             
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <h2>Медична Історія</h2>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Імʼя тварини</th>
+                    <th>Назва послуги</th>
+                    <th>Опис</th>
+                    <th>Ціна</th>
+                    <th>Категорія</th>
+                    <th>Дата запису</th>
+                    <th>Час запису</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% history.forEach(function(entry) { %>
+                    <tr>    
+                        <td><%= entry.name %></td>
+                        <td><%= entry.services_name %></td>
+                        <td><%= entry.description %></td>
+                        <td><%= entry.price %></td>
+                        <td><%= entry.service_category %></td>
+                        <td><%= entry.appointment_date %></td>
+                        <td><%= entry.appointment_time %></td>
+                        <td><%= entry.status %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

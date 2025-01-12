@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Деталі прийому</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <h1 class="header-title">Деталі прийому</h1>
+    </header>
+
+    <main>
+        <h2>Інформація про прийом</h2>
+        <p><strong>Послуга:</strong> <%= appointment.services_name %></p>
+        <p><strong>Дата:</strong> <%= appointment.appointment_date.toDateString() %></p>
+        <p><strong>Тривалість:</strong> <%= Math.ceil(appointment.status_end_time - appointment.status_start_time) / 60 %> хвилин</p>
+        <p><strong>Вартість:</strong> <%= appointment.service_cost %> грн</p>
+
+        <h2>Інформація про тварину</h2>
+        <p><strong>Ім'я:</strong> <%= appointment.animal_name %></p>
+        <p><strong>Дата народження:</strong> <%= appointment.birthday %></p>
+        <p><strong>Порода:</strong> <%= appointment.breed %></p>
+
+        <h2>Медична карта</h2>
+        <% if (appointment.diagnosis) { %>
+            <p><strong>Діагноз:</strong> <%= appointment.diagnosis %></p>
+            <p><strong>Лікування:</strong> <%= appointment.treatment %></p>
+            <p><strong>Препарати:</strong> <%= appointment.preparations %></p>
+            <p><strong>Дата запису:</strong> <%= appointment.record_date.toDateString() %></p>
+        <% } else { %>
+            <p>Немає записів у медичній карті.</p>
+        <% } %>
+
+        <h2>Оплата</h2>
+        <% if (appointment.payment_amount) { %>
+            <p><strong>Метод оплати:</strong> <%= appointment.payment_method %></p>
+            <p><strong>Сума:</strong> <%= appointment.payment_amount %> грн</p>
+        <% } else { %>
+            <p>Оплата ще не здійснена.</p>
+        <% } %>
+    </main>
+
+    <footer>
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>

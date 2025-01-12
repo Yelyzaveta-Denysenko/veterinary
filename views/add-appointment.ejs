@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Додати прийом</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+        <header class="header">
+            <nav class="nav container">
+                <h1 class="header-title">VetAN</h1>
+                <div class="nav-links">
+                    <a href="/" class="nav-link">Список тварин</a>
+                    <a href="/suppliers" class="nav-link">Послуги</a>
+                    <a href="/appointments" class="nav-link">Всі прийоми</a>
+                    <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                    <a href="/supplies" class="nav-link">Звітність</a>
+                </div>
+            </nav>
+        </header>
+    </header>
+
+    <main>
+        <h1 class="header-title">Додати новий прийом</h1>
+        <h2>Форма для додавання прийому</h2>
+        <form action="/add-appointment" method="POST" class="form-add-appointment">
+            
+            <label for="animal_id">Оберіть тварину:</label>
+            <select name="animal_id" id="animal_id" required>
+                <option value="" disabled selected>Оберіть тварину</option>
+                <% animals.forEach(animal => { %>
+                    <option value="<%= animal.animals_id %>">
+                        <%= animal.name %> - <%= animal.breed %>
+                    </option>
+                <% }); %>
+            </select>
+        
+            <label for="service_id">Оберіть послугу:</label>
+            <select name="service_id" id="service_id" required>
+                <option value="" disabled selected>Оберіть послугу</option>
+                <% services.forEach(service => { %>
+                    <option value="<%= service.services_id %>">
+                        <%= service.services_name %> - <%= service.price %> грн
+                    </option>
+                <% }); %>
+            </select>
+        
+            <label for="appointment_date">Дата прийому:</label>
+            <input type="date" name="appointment_date" id="appointment_date" min="" max="" required>
+            
+            <label for="appointment_time">Час прийому:</label>
+            <input type="time" name="appointment_time" id="appointment_time" min="10:00" max="19:00" required>
+        
+            <button type="submit" class="submit-button">Додати</button>
+        </form>
+        
+        
+    </main>
+
+    <footer>
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const minDate = `${yyyy}-${mm}-${dd}`;
+
+        // Вираховуємо дату через 3 місяці
+        const maxDateObj = new Date(today);
+        maxDateObj.setMonth(maxDateObj.getMonth() + 3);
+        const maxYyyy = maxDateObj.getFullYear();
+        const maxMm = String(maxDateObj.getMonth() + 1).padStart(2, '0');
+        const maxDd = String(maxDateObj.getDate()).padStart(2, '0');
+        const maxDate = `${maxYyyy}-${maxMm}-${maxDd}`;
+
+        const appointmentDateInput = document.getElementById("appointment_date");
+        appointmentDateInput.setAttribute("min", minDate);
+        appointmentDateInput.setAttribute("max", maxDate);
+
+        const appointmentTimeInput = document.getElementById("appointment_time");
+
+        appointmentDateInput.addEventListener("change", () => {
+            const selectedDate = new Date(appointmentDateInput.value);
+            const currentDate = new Date();
+            if (selectedDate.toDateString() === currentDate.toDateString()) {
+                // Якщо вибрано сьогоднішній день, обмежити час з урахуванням поточного часу
+                const currentHour = currentDate.getHours();
+                const currentMinutes = currentDate.getMinutes();
+                const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+                appointmentTimeInput.setAttribute("min", currentTime > "10:00" ? currentTime : "10:00");
+            } else {
+                appointmentTimeInput.setAttribute("min", "10:00");
+            }
+        });
+    });
+
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const minDate = `${yyyy}-${mm}-${dd}`;
+        
+        const appointmentDateInput = document.getElementById("appointment_date");
+        appointmentDateInput.setAttribute("min", minDate);
+
+        const appointmentTimeInput = document.getElementById("appointment_time");
+
+        appointmentDateInput.addEventListener("change", () => {
+            const selectedDate = new Date(appointmentDateInput.value);
+            const currentDate = new Date();
+            if (selectedDate.toDateString() === currentDate.toDateString()) {
+                // Якщо вибрано сьогоднішній день, обмежити час з урахуванням поточного часу
+                const currentHour = currentDate.getHours();
+                const currentMinutes = currentDate.getMinutes();
+                const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+                appointmentTimeInput.setAttribute("min", currentTime > "10:00" ? currentTime : "10:00");
+            } else {
+                appointmentTimeInput.setAttribute("min", "10:00");
+            }
+        });
+    });
+</script>
+
+

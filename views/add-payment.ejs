@@ -1,0 +1,56 @@
+<main>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Параметр</th>
+                <th>Значення</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Послуга</td>
+                <td><%= appointment.service_name %></td>
+            </tr>
+            <tr>
+                <td>Тривалість</td>
+                <td><%= appointment.duration %> хвилин</td>
+            </tr>
+            <tr>
+                <td>Вартість</td>
+                <td><%= appointment.cost %> грн</td>
+            </tr>
+            <tr>
+                <td>Діагноз</td>
+                <td><%= appointment.medical_record.diagnosis %></td>
+            </tr>
+            <tr>
+                <td>Лікування</td>
+                <td><%= appointment.medical_record.treatment %></td>
+            </tr>
+            <tr>
+                <td>Препарати</td>
+                <td><%= appointment.medical_record.preparations %></td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <form action="/appointments/payment/submit/<%= appointment.id %>" method="POST">
+        <table class="table">
+            <tr>
+                <td><label for="payment-method">Метод оплати:</label></td>
+                <td>
+                    <select name="payment_method" id="payment-method" required>
+                        <option value="Cash">Готівка</option>
+                        <option value="Credit Card">Кредитна карта</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                    <button type="submit" class="table-button">Підтвердити оплату</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+</main>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Медична картка</title>
+</head>
+<body>
+    <h1>Додати медичну картку для: <%= appointment.animal_name %></h1>
+    <p>Послуга: <%= appointment.service_name %></p>
+    <p>Дата: <%= appointment.date %></p>
+    <p>Час: <%= appointment.time %></p>
+
+    <form action="/medical-records/create" method="POST">
+        <input type="hidden" name="appointment_id" value="<%= appointment.id %>">
+        
+        <label for="diagnosis">Діагноз:</label>
+        <input type="text" id="diagnosis" name="diagnosis" required>
+        
+        <label for="treatment">Лікування:</label>
+        <input type="text" id="treatment" name="treatment" required>
+        
+        <label for="preparations">Препарати:</label>
+        <input type="text" id="preparations" name="preparations">
+
+        <button type="submit">Зберегти</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редагування Тварини</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <h1 class="header-title">VetAN</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Список тварин</a>
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <h2>Редагування інформації про тварину</h2>
+        <form class="form-container" action="/update/<%= animal.animals_id %>" method="POST">
+            <label for="id">Ідентифікатор:</label>
+            <input type="text" id="id" name="id" value="<%= animal.animals_id %>" readonly>
+
+            <label for="name">Ім'я:</label>
+            <input type="text" id="name" name="name" value="<%= animal.name %>">
+
+            <label for="breed">Вид:</label>
+            <input type="text" id="breed" name="breed" value="<%= animal.breed %>">
+
+            <label for="birthday">Дата народження:</label>
+            <input type="date" id="birthday" name="birthday" value="<%= animal.birthday.toISOString().split('T')[0] %>">
+
+            <label for="gender">Стать:</label>
+            <input type="text" id="gender" name="gender" value="<%= animal.gender %>">
+
+            <label for="vaccination">Вакцинація:</label>
+            <select id="vaccination" name="vaccination">
+                <option value="Так" <%= animal.vaccination ? 'selected' : '' %>>Так</option>
+                <option value="Ні" <%= !animal.vaccination ? 'selected' : '' %>>Ні</option>
+            </select>
+
+            <button type="submit" class="submit-button">Зберегти зміни</button>
+        </form>
+    </main>
+
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>

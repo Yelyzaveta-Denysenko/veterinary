@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прийом в процесі</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <h1 class="header-title">VetAN</h1>
+        </nav>
+    </header>
+
+    <main class="appointment-details">
+        <h1>Прийом в процесі</h1>
+        <p><strong>Тварина:</strong> <%= appointment.animal_name %></p>
+        <p><strong>Послуга:</strong> <%= appointment.service_name %></p>
+        <p><strong>Дата:</strong> <%= appointment.date %></p>
+        <p><strong>Час:</strong> <%= appointment.time %></p>
+
+        
+        <div>
+            <p><strong>Тривалість:</strong> <span id="timer">0:00</span></p>
+        </div>
+
+        <form action="/appointments/finish/<%= appointment.id %>" method="GET">
+            <button type="submit" class="btn btn-finish">Завершити прийом</button>
+        </form>
+    </main>
+
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+
+    <script>
+        const statusStartTime = new Date('<%= appointment.status_start_time.toISOString() %>'); // Server timestamp
+        const timerElement = document.getElementById('timer');
+    
+        function updateTimer() {
+            const now = new Date();
+            const elapsedMilliseconds = now - statusStartTime;
+    
+            const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+    
+            timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        }
+    
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>    
+</body>
+</html>
