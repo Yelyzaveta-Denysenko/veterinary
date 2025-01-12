@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Послуги</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <!-- Header partial or inline -->
+    <header class="header">
+        <nav class="nav container">
+            <h1 class="header-title">VetAN</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Список тварин</a>
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <!-- Search form (by service ID) -->
+        <form action="/suppliers" method="GET" class="search-form">
+            <label for="service-id">Пошук за ID послуги:</label>
+            <input type="text" id="service-id" name="service_id" placeholder="Введіть ID">
+            <button type="submit" class="search-button">Шукати</button>
+        </form>
+
+        <div class="main-header">
+            <h2>Список послуг</h2>
+            <!-- Link to page for adding new service (you’d create this route/form) -->
+            <a href="/add-service" class="add-button">Додати Послугу</a>
+        </div>
+
+        <table class="animals-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва послуги</th>
+                    <th>Опис</th>
+                    <th>Ціна (грн)</th>
+                    <th>Тривалість (хвилин)</th>
+                    <th>Категорія</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% services.forEach(function(service) { %>
+                    <tr>
+                        <td><%= service.services_id %></td>
+                        <td><%= service.services_name %></td>
+                        <td><%= service.description %></td>
+                        <td><%= service.price %></td>
+                        <td><%= service.duration %></td>
+                        <td><%= service.service_category %></td>
+                        <td>
+                            <!-- Example link to update page -->
+                            <a href="/update-service/<%= service.services_id %>" class="action-button">Оновити</a>
+
+                            <!-- Example form to delete a service -->
+                            <form action="/delete-service/<%= service.services_id %>" method="POST" style="display:inline;">
+                                <button type="submit" class="delete-button">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Footer partial or inline -->
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>

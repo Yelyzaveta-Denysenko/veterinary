@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редагування Послуги</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <h1 class="header-title">VetAN</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Список тварин</a>
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content container">
+        <h2>Редагування інформації про послугу</h2>
+        <!-- Action goes to your update-service route, using the service.services_id as a parameter -->
+        <form class="form-container" action="/update-service/<%= service.services_id %>" method="POST">
+            
+            <label for="id">Ідентифікатор:</label>
+            <input 
+                type="text" 
+                id="id" 
+                name="id" 
+                value="<%= service.services_id %>" 
+                readonly
+            >
+            
+            <label for="services_name">Назва послуги:</label>
+            <input 
+                type="text" 
+                id="services_name" 
+                name="services_name" 
+                value="<%= service.services_name %>" 
+                required
+            >
+
+            <label for="description">Опис:</label>
+            <textarea 
+                id="description" 
+                name="description" 
+                rows="3" 
+                required
+            ><%= service.description %></textarea>
+
+            <label for="price">Ціна (грн):</label>
+            <input 
+                type="number" 
+                id="price" 
+                name="price" 
+                step="0.01"
+                value="<%= service.price %>" 
+                required
+            >
+
+            <!-- If duration is stored as TEXT or INTERVAL. 
+                 If it's text, you can just put service.duration.
+                 If you store it differently, parse or format as needed. -->
+            <label for="duration">Тривалість (HH:MM:SS):</label>
+            <input 
+                type="text" 
+                id="duration" 
+                name="duration" 
+                value="<%= service.duration %>" 
+                required
+            >
+
+            <label for="service_category">Категорія:</label>
+            <input 
+                type="text" 
+                id="service_category" 
+                name="service_category" 
+                value="<%= service.service_category %>" 
+                required
+            >
+
+            <button type="submit" class="submit-button">Зберегти зміни</button>
+        </form>
+    </main>
+
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>

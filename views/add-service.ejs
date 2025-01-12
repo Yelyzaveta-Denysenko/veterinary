@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Додати Послугу</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <h1 class="header-title">VetAN</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Список тварин</a>
+                <a href="/suppliers" class="nav-link">Послуги</a>
+                <a href="/appointments" class="nav-link">Всі прийоми</a>
+                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
+                <a href="/supplies" class="nav-link">Звітність</a>
+            </div>
+        </nav>
+    </header>
+    
+    <main class="main-content form-container">
+        <h1>Нова Послуга</h1>
+        <!-- The form submits to /add-service (be sure you have a POST route in index.js) -->
+        <form action="/add-service" method="POST" class="add-animal-form">
+            <label for="services_name">Назва послуги:</label>
+            <input type="text" id="services_name" name="services_name" required>
+
+            <label for="description">Опис:</label>
+            <textarea id="description" name="description" rows="3" required></textarea>
+
+            <label for="price">Ціна (грн):</label>
+            <input type="number" id="price" name="price" step="0.01" min="0" required>
+
+            <!-- If duration is stored as an interval, 
+                 you can accept hours/minutes separately or let the user type in a format. 
+                 For simplicity, let's just say "minutes" or "HH:MM" as text. 
+                 Adjust as needed. -->
+            <label for="duration">Тривалість (напр. 00:30:00 для 30 хв):</label>
+            <input type="text" id="duration" name="duration" placeholder="HH:MM:SS" required>
+
+            <!-- Or if you prefer a numeric field for minutes:
+            <label for="duration_minutes">Тривалість (хвилин):</label>
+            <input type="number" id="duration_minutes" name="duration_minutes" min="0" required>
+            -->
+
+            <label for="service_category">Категорія послуги:</label>
+            <input type="text" id="service_category" name="service_category" required>
+
+            <button type="submit" class="submit-button">Додати</button>
+        </form>
+    </main>
+
+    <footer class="footer">
+        <p>© 2024 Ветеринарна клініка</p>
+    </footer>
+</body>
+</html>

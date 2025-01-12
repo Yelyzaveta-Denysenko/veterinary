@@ -638,6 +638,124 @@ app.get("/supplies", async (req, res) => {
     }
 });
 
+app.get("/suppliers", async (req, res) => {
+    console.log("GET /suppliers");
+
+    const { service_id } = req.query;
+    let query = `
+        SELECT 
+        services_id,
+        services_name,
+        description,
+        price,
+        floor(EXTRACT(EPOCH FROM duration)/60) AS duration,
+        service_category
+        FROM veterinary.services
+    `;
+    const params = [];
+
+    if (service_id) {
+        query += ` WHERE services_id = $1`;
+        params.push(service_id);
+    }
+
+    try {
+        const data = await runDBCommand({ text: query, values: params });
+        res.render("services", { services: data.rows });
+    } catch (error) {
+        console.error("Error fetching services:", error);
+        res.status(500).send("Error fetching services.");
+    }
+});
+
+// GET form to add new service
+app.get("/add-service", (req, res) => {
+    res.render("add-service");  // you'd create add-service.ejs
+});
+
+// POST to create new service
+app.post("/add-service", async (req, res) => {
+    const { services_name, description, price, duration, service_category } = req.body;
+    const query = `
+        INSERT INTO veterinary.services (services_name, description, price, duration, service_category)
+        VALUES ($1, $2, $3, $4, $5) RETURNING *;
+    `;
+    try {
+        await runDBCommand({ 
+          text: query, 
+          values: [services_name, description, price, duration, service_category] 
+        });
+        res.redirect("/suppliers");
+    } catch (err) {
+        console.error("Error adding service:", err);
+        res.status(500).send("Error adding service.");
+    }
+});
+
+// GET form to update an existing service
+app.get("/update-service/:services_id", async (req, res) => {
+    const serviceId = req.params.services_id;
+    const query = `
+        SELECT 
+            services_id,
+            services_name,
+            description,
+            price,
+            duration::text AS duration,
+            service_category
+        FROM veterinary.services
+        WHERE services_id = $1
+    `
+
+    try {
+        const { rows } = await runDBCommand({
+            text: query,
+            values: [serviceId],
+        });
+        if (rows.length === 0) {
+            return res.status(404).send("Service not found.");
+        }
+        res.render("update-service", { service: rows[0] }); // you'd create update-service.ejs
+    } catch (err) {
+        console.error("Error fetching service data:", err);
+        res.status(500).send("Error fetching service data.");
+    }
+});
+
+// POST to update service details
+app.post("/update-service/:services_id", async (req, res) => {
+    const serviceId = req.params.services_id;
+    const { services_name, description, price, duration, service_category } = req.body;
+    const query = `
+        UPDATE veterinary.services
+        SET services_name = $1, description = $2, price = $3, duration = $4, service_category = $5
+        WHERE services_id = $6
+    `;
+    try {
+        await runDBCommand({
+            text: query,
+            values: [services_name, description, price, duration, service_category, serviceId],
+        });
+        res.redirect("/suppliers");
+    } catch (err) {
+        console.error("Error updating service:", err);
+        res.status(500).send("Error updating service.");
+    }
+});
+
+// POST to delete a service
+app.post("/delete-service/:services_id", async (req, res) => {
+    const serviceId = req.params.services_id;
+    const query = `DELETE FROM veterinary.services WHERE services_id = $1`;
+    try {
+        await runDBCommand({ text: query, values: [serviceId] });
+        res.redirect("/suppliers");
+    } catch (err) {
+        console.error("Error deleting service:", err);
+        res.status(500).send("Error deleting service.");
+    }
+});
+
 
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
