@@ -701,21 +701,25 @@ app.get('/appointments/details/:id', async (req, res) => {
 //     }
 // });
 
-app.get("/supplies", async (req, res) => {
+app.get("/supplies", (req, res) => {
+    res.render("supplies");
+});
+
+// MONTHLY REPORT
+app.get("/reports/monthly", async (req, res) => {
     try {
+        // 1) Run your monthly query
         const query = `
             WITH service_counts AS (
                 SELECT 
-                    date_trunc('month', appointment_date) as business_month,
+                    date_trunc('month', appointment_date) AS business_month,
                     s.services_id,
-                    services_name,
+                    s.services_name,
                     count(ap.services_id) AS service_count
-                FROM 
-                    veterinary.appointment ap
+                FROM veterinary.appointment ap
                 LEFT JOIN veterinary.services s ON ap.services_id = s.services_id
                 GROUP BY 1, 2, 3
             ),
-
             ranked_services AS (
                 SELECT 
                     business_month,
@@ -723,132 +727,177 @@ app.get("/supplies", async (req, res) => {
                     services_name,
                     service_count,
                     ROW_NUMBER() OVER (PARTITION BY business_month ORDER BY service_count DESC) AS high_rank,
-                    ROW_NUMBER() OVER (PARTITION BY business_month ORDER BY service_count asc) AS low_rank
+                    ROW_NUMBER() OVER (PARTITION BY business_month ORDER BY service_count ASC) AS low_rank
                 FROM service_counts
             ),
-
-            monthly_statistic as (
+            monthly_statistic AS (
                 SELECT 
-                    date_trunc('month', appointment_date) as business_month,
-                    count(*) as appointment_amount,
-                    count(*) filter(where status = 'Completed') as appointment_succeed,
-                    count(*) filter(where status = 'Cancelled') as appointment_canceled,
-                    floor(cast(count(*) filter(where status = 'Cancelled') as numeric) / cast(count(*) as numeric) * 100) as appointment_canceled_percent,
-                    sum(fo.amount) as revenue
-                FROM 
-                    veterinary.appointment ap
-                left join veterinary.financial_operation fo 
-                    on ap.appointment_id = fo.appointment_id
-                group by 1
+                    date_trunc('month', appointment_date) AS business_month,
+                    count(*) AS appointment_amount,
+                    count(*) FILTER (WHERE status = 'Completed') AS appointment_succeed,
+                    count(*) FILTER (WHERE status = 'Cancelled') AS appointment_canceled,
+                    FLOOR(
+                        CAST(count(*) FILTER (WHERE status = 'Cancelled') AS numeric) 
+                        / CAST(count(*) AS numeric) * 100
+                    ) AS appointment_canceled_percent,
+                    SUM(fo.amount) AS revenue
+                FROM veterinary.appointment ap
+                LEFT JOIN veterinary.financial_operation fo
+                    ON ap.appointment_id = fo.appointment_id
+                GROUP BY 1
             )
-
             SELECT 
-                extract(year from ms.business_month) as year,
-                extract(month from ms.business_month) as month,
+                EXTRACT(YEAR FROM ms.business_month) AS year,
+                EXTRACT(MONTH FROM ms.business_month) AS month,
                 ms.appointment_amount,
                 ms.appointment_succeed,
                 ms.appointment_canceled,
                 ms.appointment_canceled_percent,
                 ms.revenue,
-                rsh.services_name as top_service,
-                rsl.services_name as bot_service
-            FROM 
-                monthly_statistic ms
-            left join (select * from ranked_services where high_rank = 1 ) rsh
-                on ms.business_month = rsh.business_month
-            left join (select * from ranked_services where low_rank = 1 ) rsl
-                on ms.business_month = rsl.business_month
+                rsh.services_name AS top_service,
+                rsl.services_name AS bot_service
+            FROM monthly_statistic ms
+            LEFT JOIN (
+                SELECT * FROM ranked_services WHERE high_rank = 1
+            ) rsh
+                ON ms.business_month = rsh.business_month
+            LEFT JOIN (
+                SELECT * FROM ranked_services WHERE low_rank = 1
+            ) rsl
+                ON ms.business_month = rsl.business_month
         `;
         
         const result = await runDBCommand({ text: query });
 
         const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Місяці");
         
-        const worksheet1 = workbook.addWorksheet('Місяці');
-
-        worksheet1.columns = [
-            { header: 'Рік', key: 'year' },
-            { header: 'Місяць', key: 'month' },
-            { header: 'Кількість записів', key: 'appointment_amount' },
-            { header: 'Завершені записи', key: 'appointment_succeed' },
-            { header: 'Скасовані записи', key: 'appointment_canceled' },
-            { header: 'Відсоток скасованих', key: 'appointment_canceled_percent' },
-            { header: 'Дохід (UAH)', key: 'revenue' },
-            { header: 'Найпопулярніша послуга', key: 'top_service' },
-            { header: 'Найменш популярна послуга', key: 'bot_service' },
-        ];
-
-        result.rows.forEach(row => {
-            worksheet1.addRow({
-                year: row.year,
-                month: row.month,
-                appointment_amount: row.appointment_amount,
-                appointment_succeed: row.appointment_succeed,
-                appointment_canceled: row.appointment_canceled,
-                appointment_canceled_percent: row.appointment_canceled_percent,
-                revenue: row.revenue,
-                top_service: row.top_service,
-                bot_service: row.bot_service,
-            });
+        // 1) Row 1: Title, merged A1→I1
+        worksheet.mergeCells("A1:I1");
+        worksheet.getCell("A1").value = "Звітність за місяцями";
+        worksheet.getCell("A1").font = { bold: true, size: 14 };
+        
+        // 2) Row 2: Date, merged A2→I2
+        worksheet.mergeCells("A2:I2");
+        const now = new Date();
+        worksheet.getCell("A2").value = `Дата формування: ${now.toLocaleString("uk-UA")}`;
+        
+        // Row 3: actual column headers
+        worksheet.addRow([
+            "Рік",
+            "Місяць",
+            "Кількість записів",
+            "Завершені записи",
+            "Скасовані записи",
+            "Відсоток скасованих",
+            "Дохід (UAH)",
+            "Найпопулярніша послуга",
+            "Найменш популярна послуга",
+        ]);
+  
+        // Suppose result.rows is your data
+        result.rows.forEach(rowData => {
+            worksheet.addRow([
+            rowData.year,
+            rowData.month,
+            rowData.appointment_amount,
+            rowData.appointment_succeed,
+            rowData.appointment_canceled,
+            rowData.appointment_canceled_percent,
+            rowData.revenue,
+            rowData.top_service,
+            rowData.bot_service,
+            ]);
         });
 
-        const servicesQuery = `
-            SELECT 
-                services_name as service,
-                count(*) as appointment_amount,
-                count(*) filter(where status = 'Completed') as appointment_succeed,
-                count(*) filter(where status = 'Cancelled') as appointment_canceled,
-                floor(cast(count(*) filter(where status = 'Cancelled') as numeric) / cast(count(*) as numeric) * 100) as appointment_canceled_percent,
-                coalesce(sum(fo.amount), 0) as revenue,
-                count(distinct date_trunc('month', appointment_date)) as lifetime,
-                floor(coalesce(sum(fo.amount), 0) / count(distinct date_trunc('month', appointment_date))) as avg_revenue_by_month
-            FROM   
-                veterinary.appointment ap
-            left join veterinary.services s
-                on ap.services_id = s.services_id
-            left join veterinary.financial_operation fo 
-                on ap.appointment_id = fo.appointment_id
-            group by 1
-        `;
-
-        const servicesResult = await runDBCommand({ text: servicesQuery });
-
-        const worksheet2 = workbook.addWorksheet('Послуги');
-
-        worksheet2.columns = [
-            { header: 'Послуга', key: 'service' },
-            { header: 'Кількість записів', key: 'appointment_amount' },
-            { header: 'Завершені записи', key: 'appointment_succeed' },
-            { header: 'Скасовані записи', key: 'appointment_canceled' },
-            { header: 'Відсоток скасованих', key: 'appointment_canceled_percent' },
-            { header: 'Дохід (UAH)', key: 'revenue' },
-            { header: 'Кількість місяців надання послуги', key: 'lifetime' },
-            { header: 'Середній дохід на місяць (UAH)', key: 'avg_revenue_by_month' },
-        ];        
-
-        servicesResult.rows.forEach(row => {
-            worksheet2.addRow({
-                service: row.service,
-                appointment_amount: row.appointment_amount,
-                appointment_succeed: row.appointment_succeed,
-                appointment_canceled: row.appointment_canceled,
-                appointment_canceled_percent: row.appointment_canceled_percent,
-                revenue: row.revenue,
-                lifetime: row.lifetime,
-                avg_revenue_by_month: row.avg_revenue_by_month,
-            });
-        });
-
-        res.setHeader('Content-Disposition', 'attachment; filename="report.xlsx"');
+        // 7) Send it as a downloadable Excel
+        res.setHeader('Content-Disposition', 'attachment; filename="monthly-report.xlsx"');
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
-        console.error("Error generating Excel file:", error);
-        res.status(500).send("Error generating the report file.");
+        console.error("Error generating monthly Excel file:", error);
+        res.status(500).send("Error generating monthly report file.");
     }
 });
+
+app.get("/reports/services", async (req, res) => {
+    try {
+        const servicesQuery = `
+            SELECT 
+                s.services_name AS service,
+                COUNT(*) AS appointment_amount,
+                COUNT(*) FILTER (WHERE status = 'Completed') AS appointment_succeed,
+                COUNT(*) FILTER (WHERE status = 'Cancelled') AS appointment_canceled,
+                FLOOR(
+                    CAST(COUNT(*) FILTER (WHERE status = 'Cancelled') AS numeric) 
+                    / CAST(COUNT(*) AS numeric) * 100
+                ) AS appointment_canceled_percent,
+                COALESCE(SUM(fo.amount), 0) AS revenue,
+                COUNT(DISTINCT date_trunc('month', appointment_date)) AS lifetime,
+                FLOOR(
+                    COALESCE(SUM(fo.amount), 0) 
+                    / COUNT(DISTINCT date_trunc('month', appointment_date))
+                ) AS avg_revenue_by_month
+            FROM veterinary.appointment ap
+            LEFT JOIN veterinary.services s
+                ON ap.services_id = s.services_id
+            LEFT JOIN veterinary.financial_operation fo
+                ON ap.appointment_id = fo.appointment_id
+            GROUP BY s.services_name
+        `;
+        const servicesResult = await runDBCommand({ text: servicesQuery });
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Послуги');
+
+        // Title in cell A1
+        worksheet.getCell('A1').value = 'Звітність за послугами';
+        worksheet.getCell('A1').font = { bold: true, size: 14 };
+        worksheet.mergeCells('A1:E1');
+
+        // Date in cell A2
+        const now = new Date();
+        worksheet.getCell('A2').value = `Дата формування: ${now.toLocaleString('uk-UA')}`;
+        worksheet.mergeCells('A2:E2');
+
+        // Row 3: actual column headers
+        worksheet.addRow([
+            "Послуга",
+            "Кількість записів",
+            "Завершені записи",
+            "Скасовані записи",
+            "Відсоток скасованих",
+            "Дохід (UAH)",
+            "Кількість місяців надання послуги",
+            "Середній дохід на місяць (UAH)",
+        ]);
+
+        servicesResult.rows.forEach(row => {
+            worksheet.addRow([
+                row.service,
+                row.appointment_amount,
+                row.appointment_succeed,
+                row.appointment_canceled,
+                row.appointment_canceled_percent,
+                row.revenue,
+                row.lifetime,
+                row.avg_revenue_by_month,
+            ]);
+        });
+
+        res.setHeader('Content-Disposition', 'attachment; filename="services-report.xlsx"');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error("Error generating services Excel file:", error);
+        res.status(500).send("Error generating services report file.");
+    }
+});
+
 
 app.get("/suppliers", async (req, res) => {
     console.log("GET /suppliers");

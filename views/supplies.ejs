@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Звітність</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+
+  <main class="main-content container">
+    <h1>Звітність</h1>
+    <p>Оберіть який звіт завантажити:</p>
+
+    <!-- Two buttons (or links) that go to your new routes for downloading reports -->
+    <a href="/reports/monthly" class="action-button">Завантажити Звіт за Місяцями</a>
+    <a href="/reports/services" class="action-button1">Завантажити Звіт за Послугами</a>
+  </main>
+
+  <%- include('partials/footer') %>
+</body>
+</html>
