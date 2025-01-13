@@ -3,6 +3,105 @@ const ejs = require("ejs");
 const { Client } = require("pg");
 const bodyParser = require("body-parser");
 const ExcelJS = require('exceljs');
+const fs = require('fs');
+const path = require('path');
+const PDFDocument = require('pdfkit');
+const nodemailer = require('nodemailer');
+
+
+// This function will create a PDF in memory, returning a Buffer
+async function generateAppointmentPDF(appointment) {
+    return new Promise((resolve, reject) => {
+        // Create a new PDF document
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+         // Register your custom font
+        doc.registerFont('DejaVu', 'public/fonts/DejaVuSans.ttf');
+        
+        doc.font('DejaVu'); // Tell pdfkit to use this font for subsequent text
+
+        // Collect the PDF in a buffer
+        let buffers = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => {
+            const pdfData = Buffer.concat(buffers);
+            resolve(pdfData);
+        });
+        doc.on('error', reject);
+
+        // --- PDF content: you can replicate your site’s style with colors, fonts, etc. ---
+        doc.fontSize(20).fillColor('#0078d7').text('VetAN - Підсумок прийому', { align: 'center' });
+        doc.moveDown();
+
+        // Basic info
+        doc.fontSize(14).fillColor('#000');
+        doc.text(`Ідентифікатор прийому: ${appointment.appointment_id}`, { lineGap: 4 });
+        doc.text(`Тварина: ${appointment.animal_name} (${appointment.breed}, ${appointment.gender})`, { lineGap: 4 });
+
+        const dateObj = new Date(appointment.appointment_date);
+        // "2025-01-03T00:00:00.000Z" ...
+        const isoString = dateObj.toISOString(); 
+        // Take just the date part ("YYYY-MM-DD") from the ISO string
+        const onlyDate = isoString.split("T")[0]; // "2025-01-03"
+
+        doc.text(`Дата прийому: ${onlyDate}`, { lineGap: 4 });
+
+        doc.text(`Час прийому: ${appointment.appointment_time}`, { lineGap: 4 });
+        doc.text(`Послуга: ${appointment.services_name}`, { lineGap: 4 });
+        doc.text(`Статус: ${appointment.status}`, { lineGap: 4 });
+
+        doc.moveDown();
+        doc.text('----- Медична інформація -----', { lineGap: 6, underline: true });
+        doc.text(`Діагноз: ${appointment.diagnosis || 'Немає даних'}`, { lineGap: 3 });
+        doc.text(`Лікування: ${appointment.treatment || 'Немає даних'}`, { lineGap: 3 });
+        doc.text(`Препарати: ${appointment.preparations || 'Немає даних'}`, { lineGap: 3 });
+
+        doc.moveDown();
+        doc.text('----- Оплата -----', { lineGap: 6, underline: true });
+        doc.text(`Сплачено: ${appointment.payment_amount || '0.00'} грн`, { lineGap: 3 });
+        doc.text(`Метод оплати: ${appointment.payment_method || 'N/A'}`, { lineGap: 3 });
+        doc.text(`Повна вартість послуги: ${appointment.service_cost || 'N/A'} грн`, { lineGap: 3 });
+
+        // If you want to display the estimated vs. actual time
+        // doc.text(`Початок: ${appointment.status_start_time}`);
+        // doc.text(`Кінець: ${appointment.status_end_time}`);
+
+        doc.end();
+    });
+}
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'anton.reshetniak@nure.ua',
+        pass: 'imbg gyxz wyqq ytfw'
+    }
+});
+
+async function emailAppointmentSummary(appointment, pdfBuffer) {
+    if (!appointment.owner_email) {
+        console.log('No owner email found, skipping sending.');
+        return;
+    }
+
+    const mailOptions = {
+        from: '"VetAN Clinic" <yourEmail@gmail.com>',
+        to: appointment.owner_email, 
+        subject: `Підсумок візиту для ${appointment.animal_name}`,
+        text: 'Шановний(а) власнику, у додатку знаходиться підсумок візиту вашої тварини.',
+        attachments: [
+            {
+                filename: `Appointment_${appointment.appointment_id}.pdf`,
+                content: pdfBuffer, // Buffer containing the PDF
+                contentType: 'application/pdf'
+            }
+        ]
+    };
+
+    // Send the email
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully!');
+}
 
 const client = new Client({
     user: "yelyzaveta",
@@ -474,31 +573,63 @@ app.post('/appointments/payment/submit/:id', async (req, res) => {
     const { payment_method } = req.body;
 
     try {
+        // 1) Insert payment details
         const insertQuery = `
             INSERT INTO veterinary.financial_operation 
             (appointment_id, amount, operation_method, operation_date, operation_status)
             VALUES ($1, 
-                    (SELECT s.price FROM veterinary.Appointment a 
+                    (SELECT s.price 
+                     FROM veterinary.Appointment a 
                      JOIN veterinary.Services s ON a.services_id = s.services_id 
                      WHERE a.appointment_id = $1), 
                     $2, CURRENT_TIMESTAMP, 'Paid')
         `;
         await runDBCommand({ text: insertQuery, values: [appointmentId, payment_method] });
 
+        // 2) Update appointment status
         const updateQuery = `
             UPDATE veterinary.Appointment 
             SET status = 'Completed'
             WHERE appointment_id = $1
+            RETURNING *;
         `;
         await runDBCommand({ text: updateQuery, values: [appointmentId] });
 
-        res.send(`<script>window.close();</script>`);
+        // 3) Fetch full appointment info for PDF/email
+        const fullDataQuery = `
+            SELECT 
+                a.appointment_id, a.appointment_date, a.appointment_time, a.status, 
+                a.status_start_time, a.status_end_time,
+                s.services_name, s.price AS service_cost,
+                an.name AS animal_name, an.breed, an.gender,
+                o.email AS owner_email, o.last_name AS owner_last_name, o.first_name AS owner_first_name,
+                mr.diagnosis, mr.treatment, mr.preparations,
+                p.operation_method AS payment_method, p.amount AS payment_amount
+            FROM veterinary.appointment a
+            JOIN veterinary.services s ON a.services_id = s.services_id
+            JOIN veterinary.animals an ON a.animal_id = an.animals_id
+            LEFT JOIN veterinary.owners o ON an.owners_id = o.owners_id
+            LEFT JOIN veterinary.medical_record mr ON a.appointment_id = mr.appointment_id
+            LEFT JOIN veterinary.financial_operation p ON a.appointment_id = p.appointment_id
+            WHERE a.appointment_id = $1
+        `;
+        const { rows } = await runDBCommand({ text: fullDataQuery, values: [appointmentId] });
+        const appointment = rows[0];
 
+        // 4) Generate PDF
+        const pdfBuffer = await generateAppointmentPDF(appointment);
+
+        // 5) Send the email (if owner_email exists)
+        await emailAppointmentSummary(appointment, pdfBuffer);
+
+        // 6) Close the payment window
+        res.send(`<script>window.close();</script>`);
     } catch (error) {
         console.error(error);
         res.status(500).send('Failed to process payment.');
     }
 });
+
 
 app.post('/appointments/cancel/:id', async (req, res) => {
     const appointmentId = req.params.id;
