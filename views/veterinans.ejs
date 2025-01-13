@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ветеринари</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="main-content container">
+        <!-- Search form by vet_id -->
+        <form action="/veterinans" method="GET" class="search-form">
+            <label for="search-id">Пошук за ID ветеринара:</label>
+            <input type="text" id="search-id" name="vet_id" placeholder="Введіть ID">
+            <button type="submit" class="search-button">Шукати</button>
+        </form>
+
+        <div class="main-header">
+            <h2>Список ветеринарів</h2>
+            <a href="/add-vet" class="add-button">Додати Ветеринара</a>
+        </div>
+
+        <table class="animals-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Прізвище</th>
+                    <th>Ім'я</th>
+                    <th>Спеціалізація</th>
+                    <th>Досвід</th>
+                    <th>Графік днів</th>
+                    <th>Графік годин</th>
+                    <th>Телефон</th>
+                    <th>Освіта</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% vets.forEach(vet => { %>
+                    <tr>
+                        <td><%= vet.vet_id %></td>
+                        <td><%= vet.last_name %></td>
+                        <td><%= vet.first_name %></td>
+                        <td><%= vet.specialization %></td>
+                        <td><%= vet.experience %></td>
+                        <td><%= vet.working_days %></td>
+                        <td><%= vet.working_hours %></td>
+                        <td><%= vet.phone %></td>
+                        <td><%= vet.education %></td>
+                        <td>
+                            <a href="/update-vet/<%= vet.vet_id %>" class="action-button">Оновити</a>
+                            <form action="/delete-vet/<%= vet.vet_id %>" method="POST" style="display:inline;">
+                                <button type="submit" class="delete-button">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

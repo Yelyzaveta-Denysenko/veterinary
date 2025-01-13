@@ -55,6 +55,10 @@ async function generateAppointmentPDF(appointment) {
         doc.text(`Діагноз: ${appointment.diagnosis || 'Немає даних'}`, { lineGap: 3 });
         doc.text(`Лікування: ${appointment.treatment || 'Немає даних'}`, { lineGap: 3 });
         doc.text(`Препарати: ${appointment.preparations || 'Немає даних'}`, { lineGap: 3 });
+        // Suppose 'appointment' is the row from the query above
+        doc.fontSize(12).text(`Ветеринар: ${appointment.vet_last_name} ${appointment.vet_first_name}`, { lineGap: 4 });
+        doc.text(`Спеціалізація: ${appointment.vet_specialization || 'Немає даних'}`, { lineGap: 4 });
+
 
         doc.moveDown();
         doc.text('----- Оплата -----', { lineGap: 6, underline: true });
@@ -340,12 +344,13 @@ app.post("/delete/:animals_id", async (req, res) => {
 app.get("/add-appointment", async (req, res) => {
     try {
         const animalsResult = await runDBCommand({ text: "SELECT * FROM veterinary.animals" });
-
         const servicesResult = await runDBCommand({ text: "SELECT * FROM veterinary.services" });
+        const vetsResult = await runDBCommand({ text: "SELECT * FROM veterinary.veterinans" });
 
         res.render("add-appointment", {
             animals: animalsResult.rows,
-            services: servicesResult.rows
+            services: servicesResult.rows,
+            vets: vetsResult.rows,  // Pass veterinarians to EJS
         });
     } catch (error) {
         console.error("Помилка отримання даних для форми:", error);
@@ -354,16 +359,17 @@ app.get("/add-appointment", async (req, res) => {
 });
 
 app.post("/add-appointment", async (req, res) => {
-    const { animal_id, service_id, appointment_date, appointment_time } = req.body;
+    const { animal_id, service_id, vet_id, appointment_date, appointment_time } = req.body;
 
     try {
         const query = `
-            INSERT INTO veterinary.appointment (appointment_date, appointment_time, animal_id, services_id, status)
-            VALUES ($1, $2, $3, $4, 'Scheduled') RETURNING *`;
+            INSERT INTO veterinary.appointment 
+                (appointment_date, appointment_time, animal_id, services_id, vet_id, status)
+            VALUES ($1, $2, $3, $4, $5, 'Scheduled') RETURNING *`;
 
         const result = await runDBCommand({
             text: query,
-            values: [appointment_date, appointment_time, animal_id, service_id],
+            values: [appointment_date, appointment_time, animal_id, service_id, vet_id],
         });
 
         console.log("Новий запис на прийом створено:", result.rows[0]);
@@ -604,13 +610,16 @@ app.post('/appointments/payment/submit/:id', async (req, res) => {
                 an.name AS animal_name, an.breed, an.gender,
                 o.email AS owner_email, o.last_name AS owner_last_name, o.first_name AS owner_first_name,
                 mr.diagnosis, mr.treatment, mr.preparations,
-                p.operation_method AS payment_method, p.amount AS payment_amount
+                p.operation_method AS payment_method, p.amount AS payment_amount,
+                v.last_name AS vet_last_name, v.first_name AS vet_first_name,
+                v.specialization AS vet_specialization
             FROM veterinary.appointment a
             JOIN veterinary.services s ON a.services_id = s.services_id
             JOIN veterinary.animals an ON a.animal_id = an.animals_id
             LEFT JOIN veterinary.owners o ON an.owners_id = o.owners_id
             LEFT JOIN veterinary.medical_record mr ON a.appointment_id = mr.appointment_id
             LEFT JOIN veterinary.financial_operation p ON a.appointment_id = p.appointment_id
+            LEFT JOIN veterinary.veterinans v ON a.vet_id = v.vet_id
             WHERE a.appointment_id = $1
         `;
         const { rows } = await runDBCommand({ text: fullDataQuery, values: [appointmentId] });
@@ -1100,6 +1109,153 @@ app.post("/delete-owner/:owners_id", async (req, res) => {
     }
 });
 
+app.get("/veterinans", async (req, res) => {
+    const { vet_id } = req.query;
+    
+    let query = "SELECT * FROM veterinary.veterinans";
+    const params = [];
+
+    if (vet_id) {
+        query += " WHERE vet_id = $1";
+        params.push(vet_id);
+    }
+
+    try {
+        const result = await runDBCommand({ text: query, values: params });
+        res.render("veterinans", { vets: result.rows });
+    } catch (error) {
+        console.error("Error fetching veterinarians:", error);
+        res.status(500).send("Error fetching veterinarians.");
+    }
+});
+
+// GET - show form
+app.get("/add-vet", (req, res) => {
+    res.render("add-vet");
+});
+
+// POST - insert new veterinarian
+app.post("/add-vet", async (req, res) => {
+    const {
+        last_name,
+        first_name,
+        specialization,
+        experience,
+        working_days,
+        working_hours,
+        phone,
+        education
+    } = req.body;
+
+    const query = `
+        INSERT INTO veterinary.veterinans 
+            (last_name, first_name, specialization, experience, 
+             working_days, working_hours, phone, education)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *;
+    `;
+    try {
+        await runDBCommand({
+            text: query,
+            values: [
+                last_name,
+                first_name,
+                specialization,
+                experience,
+                working_days,
+                working_hours,
+                phone,
+                education
+            ],
+        });
+        res.redirect("/veterinans");
+    } catch (error) {
+        console.error("Error adding veterinarian:", error);
+        res.status(500).send("Error adding veterinarian.");
+    }
+});
+
+// GET - fetch existing vet data
+app.get("/update-vet/:vet_id", async (req, res) => {
+    const vetId = req.params.vet_id;
+
+    try {
+        const { rows } = await runDBCommand({
+            text: "SELECT * FROM veterinary.veterinans WHERE vet_id = $1",
+            values: [vetId],
+        });
+        if (rows.length === 0) {
+            return res.status(404).send("Ветеринара не знайдено.");
+        }
+        res.render("update-vet", { vet: rows[0] });
+    } catch (error) {
+        console.error("Error fetching vet data:", error);
+        res.status(500).send("Error fetching vet data.");
+    }
+});
+
+// POST - update vet
+app.post("/update-vet/:vet_id", async (req, res) => {
+    const vetId = req.params.vet_id;
+    const {
+        last_name,
+        first_name,
+        specialization,
+        experience,
+        working_days,
+        working_hours,
+        phone,
+        education
+    } = req.body;
+
+    const query = `
+        UPDATE veterinary.veterinans
+        SET 
+            last_name = $1,
+            first_name = $2,
+            specialization = $3,
+            experience = $4,
+            working_days = $5,
+            working_hours = $6,
+            phone = $7,
+            education = $8
+        WHERE vet_id = $9
+    `;
+    try {
+        await runDBCommand({
+            text: query,
+            values: [
+                last_name,
+                first_name,
+                specialization,
+                experience,
+                working_days,
+                working_hours,
+                phone,
+                education,
+                vetId
+            ],
+        });
+        res.redirect("/veterinans");
+    } catch (error) {
+        console.error("Error updating veterinarian:", error);
+        res.status(500).send("Error updating veterinarian.");
+    }
+});
+
+app.post("/delete-vet/:vet_id", async (req, res) => {
+    const vetId = req.params.vet_id;
+    const query = `DELETE FROM veterinary.veterinans WHERE vet_id = $1`;
+
+    try {
+        await runDBCommand({ text: query, values: [vetId] });
+        console.log(`Vet with ID ${vetId} deleted successfully`);
+        res.redirect("/veterinans");
+    } catch (error) {
+        console.error("Error deleting veterinarian:", error);
+        res.status(500).send("Error deleting veterinarian.");
+    }
+});
 
 
 app.listen(3000, () => {

@@ -3,52 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Додати прийом</title>
+    <title>Записати на прийом</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
     <%- include('partials/header') %>
+    <main class="main-content container">
+        <h1>Створити новий запис</h1>
 
-    <main>
-        <h1 class="header-title">Додати новий прийом</h1>
-        <h2>Форма для додавання прийому</h2>
-        <form action="/add-appointment" method="POST" class="form-add-appointment">
-            
-            <label for="animal_id">Оберіть тварину:</label>
-            <select name="animal_id" id="animal_id" required>
-                <option value="" disabled selected>Оберіть тварину</option>
+        <form action="/add-appointment" method="POST">
+            <label for="animal_id">Тварина:</label>
+            <select id="animal_id" name="animal_id" required>
                 <% animals.forEach(animal => { %>
                     <option value="<%= animal.animals_id %>">
-                        <%= animal.name %> - <%= animal.breed %>
+                        <%= animal.name %>
                     </option>
-                <% }); %>
+                <% }) %>
             </select>
-        
-            <label for="service_id">Оберіть послугу:</label>
-            <select name="service_id" id="service_id" required>
-                <option value="" disabled selected>Оберіть послугу</option>
+
+            <label for="service_id">Послуга:</label>
+            <select id="service_id" name="service_id" required>
                 <% services.forEach(service => { %>
                     <option value="<%= service.services_id %>">
-                        <%= service.services_name %> - <%= service.price %> грн
+                        <%= service.services_name %>
                     </option>
-                <% }); %>
+                <% }) %>
             </select>
-        
-            <label for="appointment_date">Дата прийому:</label>
-            <input type="date" name="appointment_date" id="appointment_date" min="" max="" required>
-            
-            <label for="appointment_time">Час прийому:</label>
-            <input type="time" name="appointment_time" id="appointment_time" min="10:00" max="19:00" required>
-        
-            <button type="submit" class="submit-button">Додати</button>
-        </form>
-        
-        
-    </main>
 
+            <!-- NEW: Vet dropdown -->
+            <label for="vet_id">Ветеринар:</label>
+            <select id="vet_id" name="vet_id" required>
+                <% vets.forEach(vet => { %>
+                    <option value="<%= vet.vet_id %>">
+                        <%= vet.last_name %> <%= vet.first_name %> (ID: <%= vet.vet_id %>)
+                    </option>
+                <% }) %>
+            </select>
+
+            <label for="appointment_date">Дата:</label>
+            <input type="date" id="appointment_date" name="appointment_date" required>
+
+            <label for="appointment_time">Час:</label>
+            <input type="time" id="appointment_time" name="appointment_time" required>
+
+            <button type="submit" class="submit-button">Створити</button>
+        </form>
+    </main>
     <%- include('partials/footer') %>
 </body>
 </html>
+
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const today = new Date();
@@ -85,7 +89,6 @@
             }
         });
     });
-
 
 
     document.addEventListener("DOMContentLoaded", () => {

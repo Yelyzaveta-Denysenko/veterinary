@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Додати Ветеринара</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="main-content form-container">
+        <h1>Новий Ветеринар</h1>
+        <form action="/add-vet" method="POST" class="add-animal-form">
+            <label for="last_name">Прізвище:</label>
+            <input type="text" id="last_name" name="last_name" required>
+
+            <label for="first_name">Ім'я:</label>
+            <input type="text" id="first_name" name="first_name" required>
+
+            <label for="specialization">Спеціалізація:</label>
+            <input type="text" id="specialization" name="specialization" required>
+
+            <label for="experience">Досвід (років):</label>
+            <input type="number" id="experience" name="experience" min="0" required>
+
+            <label for="working_days">Графік днів:</label>
+            <textarea id="working_days" name="working_days" rows="2"></textarea>
+
+            <label for="working_hours">Графік годин:</label>
+            <textarea id="working_hours" name="working_hours" rows="2"></textarea>
+
+            <label for="phone">Телефон:</label>
+            <input type="text" id="phone" name="phone" required>
+
+            <label for="education">Освіта:</label>
+            <textarea id="education" name="education" rows="3"></textarea>
+
+            <button type="submit" class="submit-button">Додати</button>
+        </form>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
