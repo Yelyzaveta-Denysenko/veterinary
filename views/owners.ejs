@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Власники</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/header') %> <!-- or inline header if not using partials -->
+    
+    <main class="main-content container">
+        <form action="/owners" method="GET" class="search-form">
+            <label for="search-id">Пошук за ID власника:</label>
+            <input type="text" id="search-id" name="owner_id" placeholder="Введіть ID">
+            <button type="submit" class="search-button">Шукати</button>
+        </form>
+
+        <div class="main-header">
+            <h2>Список власників</h2>
+            <a href="/add-owner" class="add-button">Додати Власника</a>
+        </div>
+
+        <table class="animals-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Прізвище</th>
+                    <th>Ім'я</th>
+                    <th>Телефон</th>
+                    <th>Адреса</th>
+                    <th>Електронна пошта</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% owners.forEach(owner => { %>
+                    <tr>
+                        <td><%= owner.owners_id %></td>
+                        <td><%= owner.last_name %></td>
+                        <td><%= owner.first_name %></td>
+                        <td><%= owner.phone %></td>
+                        <td><%= owner.address %></td>
+                        <td><%= owner.email %></td>
+                        <td>
+                            <!-- Update link -->
+                            <a href="/update-owner/<%= owner.owners_id %>" class="action-button">
+                                Редагувати
+                            </a>
+                            <!-- Delete form -->
+                            <form 
+                                action="/delete-owner/<%= owner.owners_id %>" 
+                                method="POST" 
+                                style="display:inline;"
+                            >
+                                <button type="submit" class="delete-button">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

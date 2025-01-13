@@ -7,18 +7,7 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <header class="header">
-        <nav class="nav container">
-            <h1 class="header-title">VetAN</h1>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Список тварин</a>
-                <a href="/suppliers" class="nav-link">Послуги</a>
-                <a href="/appointments" class="nav-link">Всі прийоми</a>
-                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
-                <a href="/supplies" class="nav-link">Звітність</a>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <main class="main-content container">
         <form action="/search" method="GET" class="search-form">
@@ -40,6 +29,7 @@
                     <th>Дата народження</th>
                     <th>Стать</th>
                     <th>Вакцинація</th>
+                    <th>Власник</th> <!-- NEW COLUMN -->
                     <th>Дії</th>
                 </tr>
             </thead>
@@ -61,22 +51,30 @@
                         </td>
                         <td><%= animal.gender %></td>
                         <td><%= animal.vaccination ? "Так" : "Ні" %></td>
+        
+                        <!-- OWNER INFO -->
+                        <td>
+                            <% if (animal.owners_id) { %>
+                                <%= animal.owner_last_name %> <%= animal.owner_first_name %>
+                            <% } else { %>
+                                Немає
+                            <% } %>
+                        </td>
+        
+                        <!-- ACTIONS -->
                         <td>
                             <a href="/animal-history/<%= animal.animals_id %>" class="action-button1">Історія</a>
                             <a href="/update/<%= animal.animals_id %>" class="action-button">Оновити</a>
                             <form action="/delete/<%= animal.animals_id %>" method="POST" style="display:inline;">
-                                <form action="/delete/<%= animal.animals_id %>" method="POST" style="display:inline;">
-                                    <button type="submit" class="delete-button">Видалити</button></form>
+                                <button type="submit" class="delete-button">Видалити</button>
                             </form>
                         </td>
                     </tr>
                 <% }) %>
             </tbody>
-        </table>
+        </table>        
     </main>
 
-    <footer class="footer">
-        <p>© 2024 Ветеринарна клініка</p>
-    </footer>
+    <%- include('partials/footer') %>
 </body>
 </html>

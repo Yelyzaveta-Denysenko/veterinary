@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редагування Власника</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="main-content container">
+        <h2>Редагування інформації про власника</h2>
+        <form class="form-container" action="/update-owner/<%= owner.owners_id %>" method="POST">
+            <label for="owners_id">Ідентифікатор:</label>
+            <input 
+                type="text" 
+                id="owners_id" 
+                name="owners_id" 
+                value="<%= owner.owners_id %>" 
+                readonly
+            >
+
+            <label for="last_name">Прізвище:</label>
+            <input 
+                type="text" 
+                id="last_name" 
+                name="last_name"
+                value="<%= owner.last_name %>"
+                required
+            >
+
+            <label for="first_name">Ім'я:</label>
+            <input 
+                type="text" 
+                id="first_name" 
+                name="first_name"
+                value="<%= owner.first_name %>"
+                required
+            >
+
+            <label for="phone">Телефон:</label>
+            <input 
+                type="text" 
+                id="phone" 
+                name="phone"
+                value="<%= owner.phone %>"
+                required
+            >
+
+            <label for="address">Адреса:</label>
+            <input 
+                type="text" 
+                id="address" 
+                name="address"
+                value="<%= owner.address %>"
+                required
+            >
+
+            <label for="email">Електронна пошта:</label>
+            <input 
+                type="email" 
+                id="email" 
+                name="email"
+                value="<%= owner.email %>"
+                required
+            >
+
+            <button type="submit" class="submit-button">Зберегти зміни</button>
+        </form>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

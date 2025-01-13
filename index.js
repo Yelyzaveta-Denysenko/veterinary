@@ -29,14 +29,29 @@ app.use(express.static("public"));
 app.get("/", async (req, res) => {
     console.log("GET /");
 
-
     const { animal_id } = req.query;
 
-    let query = `SELECT * FROM veterinary.animals`;
+    // LEFT JOIN with owners to display short info about the owner
+    let query = `
+        SELECT 
+            a.animals_id, 
+            a.name, 
+            a.breed, 
+            a.birthday, 
+            a.gender, 
+            a.vaccination,
+            a.owners_id,
+            o.last_name AS owner_last_name,
+            o.first_name AS owner_first_name
+        FROM veterinary.animals a
+        LEFT JOIN veterinary.owners o 
+            ON a.owners_id = o.owners_id
+    `;
     const params = [];
 
+    // Optional: filter by animal_id if user searches by ID
     if (animal_id) {
-        query += ` WHERE animals_id = $1`;
+        query += ` WHERE a.animals_id = $1`;
         params.push(animal_id); 
     }
 
@@ -49,21 +64,42 @@ app.get("/", async (req, res) => {
     }
 });
 
-app.get("/add-animal", (req, res) => {
+
+app.get("/add-animal", async (req, res) => {
     console.log("GET /add-animal");
-    res.render("add-animal");
+
+    try {
+        // Fetch the list of owners
+        const ownersResult = await runDBCommand({
+            text: "SELECT owners_id, last_name, first_name FROM veterinary.owners ORDER BY last_name",
+        });
+        res.render("add-animal", { owners: ownersResult.rows });
+    } catch (error) {
+        console.error("Error loading add-animal form:", error);
+        res.status(500).send("Error loading form for new animal.");
+    }
 });
+
 
 app.post("/add-animal", async (req, res) => {
     console.log("POST /add-animal");
-    const { name, breed, birthday, gender, vaccination } = req.body;
-    const isVaccinated = vaccination === "Так";
+    const { name, breed, birthday, gender, vaccination, owners_id } = req.body;
+    const isVaccinated = (vaccination === "Так");
 
-    const query = `INSERT INTO veterinary.animals (name, breed, birthday, gender, vaccination) 
-                   VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+    // Convert empty string to null if not chosen
+    const ownerIdValue = owners_id ? owners_id : null;
+
+    const query = `
+        INSERT INTO veterinary.animals 
+            (name, breed, birthday, gender, vaccination, owners_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *`;
 
     try {
-        const result = await runDBCommand({ text: query, values: [name, breed, birthday, gender, isVaccinated] });
+        const result = await runDBCommand({
+            text: query,
+            values: [name, breed, birthday, gender, isVaccinated, ownerIdValue],
+        });
         console.log("New animal added:", result.rows[0]);
         res.redirect("/");
     } catch (error) {
@@ -71,6 +107,7 @@ app.post("/add-animal", async (req, res) => {
         res.status(500).send("Error adding the animal.");
     }
 });
+
 
 app.get("/animal-history/:animals_id", async (req, res) => {
     const animalId = req.params.animals_id;
@@ -108,11 +145,38 @@ app.get("/animal-history/:animals_id", async (req, res) => {
 app.get("/update/:animals_id", async (req, res) => {
     const animalId = req.params.animals_id;
 
-    const query = `SELECT * FROM veterinary.animals WHERE animals_id = $1`;
-
     try {
-        const result = await runDBCommand({ text: query, values: [animalId] });
-        res.render("update-animal", { animal: result.rows[0] });
+        // Fetch the animal we want to update
+        const animalQuery = `
+            SELECT * 
+            FROM veterinary.animals 
+            WHERE animals_id = $1
+        `;
+        const animalResult = await runDBCommand({
+            text: animalQuery,
+            values: [animalId],
+        });
+        
+        if (animalResult.rows.length === 0) {
+            return res.status(404).send("Тварину не знайдено.");
+        }
+        const animal = animalResult.rows[0];
+
+        // Fetch all owners to populate a dropdown
+        const ownersQuery = `
+            SELECT owners_id, last_name, first_name 
+            FROM veterinary.owners 
+            ORDER BY last_name
+        `;
+        const ownersResult = await runDBCommand({
+            text: ownersQuery
+        });
+
+        // Render the EJS, passing both the animal and the list of owners
+        res.render("update-animal", {
+            animal,
+            owners: ownersResult.rows
+        });
     } catch (error) {
         console.error("Error fetching animal data for update:", error);
         res.status(500).send("Error fetching animal data.");
@@ -121,21 +185,29 @@ app.get("/update/:animals_id", async (req, res) => {
 
 app.post("/update/:animals_id", async (req, res) => {
     const animalId = req.params.animals_id;
-    const { name, breed, birthday, gender, vaccination } = req.body;
-    const isVaccinated = vaccination === "Так";
+    const { name, breed, birthday, gender, vaccination, owners_id } = req.body;
+    const isVaccinated = (vaccination === "Так");
+
+    // Convert empty string (if user chooses no owner) to null
+    const ownerIdValue = owners_id ? owners_id : null;
 
     const query = `
         UPDATE veterinary.animals
-        SET name = $1,
+        SET 
+            name = $1,
             breed = $2,
             birthday = $3,
             gender = $4,
-            vaccination = $5
-        WHERE animals_id = $6
+            vaccination = $5,
+            owners_id = $6
+        WHERE animals_id = $7
     `;
 
     try {
-        await runDBCommand({ text: query, values: [name, breed, birthday, gender, isVaccinated, animalId] });
+        await runDBCommand({
+            text: query,
+            values: [name, breed, birthday, gender, isVaccinated, ownerIdValue, animalId]
+        });
         console.log("Animal updated successfully");
         res.redirect("/");
     } catch (error) {
@@ -755,6 +827,148 @@ app.post("/delete-service/:services_id", async (req, res) => {
         res.status(500).send("Error deleting service.");
     }
 });
+
+app.get("/owners", async (req, res) => {
+    const { owner_id } = req.query;
+
+    let query = "SELECT * FROM veterinary.owners";
+    const params = [];
+
+    if (owner_id) {
+        query += " WHERE owners_id = $1";
+        params.push(owner_id);
+    }
+
+    try {
+        const result = await runDBCommand({ text: query, values: params });
+        res.render("owners", { owners: result.rows });
+    } catch (error) {
+        console.error("Error fetching owners:", error);
+        res.status(500).send("Помилка завантаження власників.");
+    }
+});
+
+
+// GET form to add an owner
+app.get("/add-owner", (req, res) => {
+    res.render("add-owner");
+});
+
+// POST form submission for new owner
+app.post("/add-owner", async (req, res) => {
+    const { last_name, first_name, phone, address, email } = req.body;
+
+    const query = `
+        INSERT INTO veterinary.owners (last_name, first_name, phone, address, email)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *;
+    `;
+    try {
+        await runDBCommand({
+            text: query,
+            values: [last_name, first_name, phone, address, email],
+        });
+        res.redirect("/owners");
+    } catch (error) {
+        console.error("Error adding owner:", error);
+        res.status(500).send("Помилка при додаванні власника.");
+    }
+});
+
+
+// GET form with existing owner data
+app.get("/update-owner/:owners_id", async (req, res) => {
+    const ownerId = req.params.owners_id;
+
+    try {
+        const { rows } = await runDBCommand({
+            text: "SELECT * FROM veterinary.owners WHERE owners_id = $1",
+            values: [ownerId],
+        });
+
+        if (rows.length === 0) {
+            return res.status(404).send("Власника не знайдено.");
+        }
+        // Render update-owner.ejs, passing in the existing row
+        res.render("update-owner", { owner: rows[0] });
+    } catch (error) {
+        console.error("Error fetching owner data:", error);
+        res.status(500).send("Помилка при отриманні даних власника.");
+    }
+});
+
+// POST to actually update the owner
+app.post("/update-owner/:owners_id", async (req, res) => {
+    const ownerId = req.params.owners_id;
+    const { last_name, first_name, phone, address, email } = req.body;
+
+    const query = `
+        UPDATE veterinary.owners
+        SET 
+            last_name = $1,
+            first_name = $2,
+            phone = $3,
+            address = $4,
+            email = $5
+        WHERE owners_id = $6
+    `;
+    try {
+        await runDBCommand({
+            text: query,
+            values: [last_name, first_name, phone, address, email, ownerId],
+        });
+        res.redirect("/owners");
+    } catch (error) {
+        console.error("Error updating owner:", error);
+        res.status(500).send("Помилка при оновленні власника.");
+    }
+});
+
+app.get("/attach-owner/:animals_id", async (req, res) => {
+    const animalId = req.params.animals_id;
+
+    try {
+        // 1) Get the animal info
+        const animalResult = await runDBCommand({
+            text: "SELECT * FROM veterinary.animals WHERE animals_id = $1",
+            values: [animalId],
+        });
+        if (animalResult.rows.length === 0) {
+            return res.status(404).send("Тварину не знайдено.");
+        }
+        const animal = animalResult.rows[0];
+
+        // 2) Get the list of owners
+        const ownersResult = await runDBCommand({
+            text: "SELECT owners_id, last_name, first_name FROM veterinary.owners ORDER BY last_name",
+        });
+
+        // 3) Render a form page
+        res.render("attach-owner", {
+            animal,
+            owners: ownersResult.rows,
+        });
+    } catch (error) {
+        console.error("Error loading attach-owner form:", error);
+        res.status(500).send("Помилка завантаження форми для призначення власника.");
+    }
+});
+
+
+app.post("/delete-owner/:owners_id", async (req, res) => {
+    const ownerId = req.params.owners_id;
+    const query = "DELETE FROM veterinary.owners WHERE owners_id = $1";
+
+    try {
+        await runDBCommand({ text: query, values: [ownerId] });
+        console.log(`Owner with ID ${ownerId} deleted successfully`);
+        res.redirect("/owners");
+    } catch (error) {
+        console.error("Error deleting owner:", error);
+        res.status(500).send("Помилка при видаленні власника.");
+    }
+});
+
 
 
 app.listen(3000, () => {

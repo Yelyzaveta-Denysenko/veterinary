@@ -7,45 +7,45 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <header class="header">
-        <nav class="nav">
-            <h1 class="header-title">VetAN</h1>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Список тварин</a>
-                <a href="/suppliers" class="nav-link">Послуги</a>
-                <a href="/appointments" class="nav-link">Всі прийоми</a>
-                <a href="/add-appointment" class="nav-link">Записати на прийом</a>
-                <a href="/supplies" class="nav-link">Звітність</a>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
     
     <main class="main-content form-container">
         <h1>Нова Тварина</h1>
         <form action="/add-animal" method="POST" class="add-animal-form">
             <label for="name">Імʼя тварини:</label>
             <input type="text" id="name" name="name" required>
-
+        
             <label for="breed">Вид тварини:</label>
             <input type="text" id="breed" name="breed" required>
-
+        
             <label for="birthday">Дата народження тварини:</label>
             <input type="date" id="birthday" name="birthday" required>
-
+        
             <label for="gender">Стать тварини:</label>
             <select id="gender" name="gender" required>
                 <option value="Чоловічий">Чоловічий</option>
                 <option value="Жіночий">Жіночий</option>
             </select>
-
+        
             <label for="vaccination">Вакційована:</label>
             <select id="vaccination" name="vaccination" required>
                 <option value="Так">Так</option>
                 <option value="Ні">Ні</option>
             </select>
-
+        
+            <!-- NEW FIELD: OWNER -->
+            <label for="owners_id">Власник (необов'язково):</label>
+            <select id="owners_id" name="owners_id">
+                <option value="">Без власника</option>
+                <% owners.forEach(function(owner) { %>
+                    <option value="<%= owner.owners_id %>">
+                        <%= owner.last_name %> <%= owner.first_name %> (ID: <%= owner.owners_id %>)
+                    </option>
+                <% }) %>
+            </select>
+        
             <button type="submit" class="submit-button">Додати</button>
-        </form>
+        </form>        
     </main>
 </body>
 </html>

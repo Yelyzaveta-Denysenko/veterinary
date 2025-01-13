@@ -30,9 +30,7 @@
         </form>
     </main>
 
-    <footer class="footer">
-        <p>© 2024 Ветеринарна клініка</p>
-    </footer>
+    <%- include('partials/footer') %>
 
     <script>
         const statusStartTime = new Date('<%= appointment.status_start_time.toISOString() %>'); // Server timestamp
