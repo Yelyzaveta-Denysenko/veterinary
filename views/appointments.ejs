@@ -9,24 +9,43 @@
 <body>
     <%- include('partials/header') %>
 
-    <main class="appointments-list">
-        <h1>Всі записи на прийом</h1>
 
-        <form action="/appointments" method="GET" class="filter-form">
-            <label for="status">Фільтрувати за статусом:</label>
-            <select name="status" id="status">
-                <option value="">Всі</option>
-                <option value="Scheduled">Очікує</option>
-                <option value="Completed">Завершено</option>
-                <option value="Cancelled">Скасовано</option>
-                <option value="In progress">В процесі</option>
-                <option value="Not paid">Очікує оплату</option>
-            </select>
-            <button type="submit">Застосувати</button>
-        </form>
-        
+
+    <main class="main-content container">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Пошук..." class="search-box">
+         </div>
+        <div class="filter-container" style="background-color: transparent; box-shadow: none; padding: 0;">
+            <button class="filter-toggle-button">Фільтрувати</button>
+        </div>
+            <form action="/appointments" method="GET" class="filter-form hidden">
+                <div class="filter-group">
+                    <label for="status">Фільтрувати за статусом:</label>
+                    <select name="status" id="status">
+                        <option value="">Всі</option>
+                        <option value="Scheduled">Очікує</option>
+                        <option value="Completed">Завершено</option>
+                        <option value="Cancelled">Скасовано</option>
+                        <option value="In progress">В процесі</option>
+                        <option value="Not paid">Очікує оплату</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="start-date">Дата від:</label>
+                    <input type="date" name="start_date" id="start-date" value="<%= startDate %>">
+                </div>
+                <div class="filter-group">
+                    <label for="end-date">Дата до:</label>
+                    <input type="date" name="end_date" id="end-date" value="<%= endDate %>">
+                </div>
+                <button type="submit" class="action-button">Застосувати</button>
+            </form>
+        </div>
+    
+    
+        <h2>Список записів на прийом</h2>
         <% if (appointments.length > 0) { %>
-            <table>
+            <table class="animals-table">
                 <thead>
                     <tr>
                         <th>Тварина</th>
@@ -34,56 +53,50 @@
                         <th>Дата</th>
                         <th>Час</th>
                         <th>Статус</th>
+                        <th>Дії</th>
                     </tr>
                 </thead>
                 <tbody>
                     <% appointments.forEach(function(appointment) { %>
-                        <% if (!filterStatus || appointment.status === filterStatus) { %>
-                            <tr>
-                                <td><%= appointment.animal_name %></td>
-                                <td><%= appointment.service_name %></td>
-                                <td><%= appointment.date %></td>
-                                <td><%= appointment.time %></td>
-                                <td><%= appointment.status %></td>
-                                <td>
-                                    <% if (appointment.status === 'Scheduled') { %>
-                                        <form action="/appointments/start/<%= appointment.id %>" method="POST" style="display:inline;" onsubmit="openNewTabAndSubmit(event, '<%= appointment.id %>')">
-                                            <button type="submit" class="btn btn-start">Почати</button>
-                                        </form>
-                                        <form action="/appointments/cancel/<%= appointment.id %>" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-cancel" onclick="return confirm('Ви впевнені, що хочете скасувати цей прийом?');">Скасувати</button>
-                                        </form>
-                                    <% } else if (appointment.status === 'In progress') { %>
-                                        <form style="display:inline;" onsubmit="openInProgressTab(event, '<%= appointment.id %>')">
-                                            <button type="submit" class="btn btn-progress">Переглянути</button>
-                                        </form>
-                                        <form action="/appointments/cancel/<%= appointment.id %>" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-cancel" onclick="return confirm('Ви впевнені, що хочете скасувати цей прийом?');">Скасувати</button>
-                                        </form>
-                                    <% } else if (appointment.status === 'Not paid') { %>
-                                        <form style="display:inline;" onsubmit="openAddPaymentPage(event, '<%= appointment.id %>')">
-                                            <button type="submit" class="btn btn-payment">Додати оплату</button>
-                                        </form>
-                                    <% } else if (appointment.status === 'Completed') { %>
-                                        <form style="display:inline;" onclick="openDetailsPage(event, '<%= appointment.id %>')">
-                                            <button type="button" class="btn btn-inspect">Переглянути</button>
-                                        </form>
-                                    <% } %>
-                                </td>
-                            </tr>
-                        <% } %>
+                        <tr>
+                            <td><%= appointment.animal_name %></td>
+                            <td><%= appointment.service_name %></td>
+                            <td><%= appointment.date %></td>
+                            <td><%= appointment.time %></td>
+                            <td><%= appointment.status %></td>
+                            <td>
+                                <% if (appointment.status === 'Scheduled') { %>
+                                    <form action="/appointments/start/<%= appointment.id %>" method="POST" style="display:inline;" onsubmit="openNewTabAndSubmit(event, '<%= appointment.id %>')">
+                                        <button type="submit" class="action-button">Почати</button>
+                                    </form>
+                                    <form action="/appointments/cancel/<%= appointment.id %>" method="POST" style="display:inline;">
+                                        <button type="submit" class="delete-button" onclick="return confirm('Ви впевнені, що хочете скасувати цей прийом?');">Скасувати</button>
+                                    </form>
+                                <% } else if (appointment.status === 'In progress') { %>
+                                    <form style="display:inline;" onsubmit="openInProgressTab(event, '<%= appointment.id %>')">
+                                        <button type="submit" class="action-button1">Переглянути</button>
+                                    </form>
+                                <% } else if (appointment.status === 'Not paid') { %>
+                                    <form style="display:inline;" onsubmit="openAddPaymentPage(event, '<%= appointment.id %>')">
+                                        <button type="submit" class="action-button1">Додати оплату</button>
+                                    </form>
+                                <% } else if (appointment.status === 'Completed') { %>
+                                    <form style="display:inline;" onclick="openDetailsPage(event, '<%= appointment.id %>')">
+                                        <button type="button" class="action-button1">Переглянути</button>
+                                    </form>
+                                <% } %>
+                            </td>
+                        </tr>
                     <% }); %>
                 </tbody>
             </table>
         <% } else { %>
             <p>Немає записів на прийом.</p>
         <% } %>
-    </main>
+    </main>    
 
     <%- include('partials/footer') %>
 </body>
-</html>
-
 <script>
     async function openNewTabAndSubmit(event, appointmentId) {
         event.preventDefault();
@@ -118,11 +131,9 @@
     async function openInProgressTab(event, appointmentId) {
         event.preventDefault();
 
-        // Open the new tab directly
         const newTabUrl = `/appointments/in-progress/${appointmentId}`;
         const newTab = window.open(newTabUrl, '_blank');
 
-        // Optional: Refresh the current tab to keep it updated
         window.location.reload();
     }
 
@@ -137,4 +148,34 @@
         const newTabUrl = `/appointments/details/${appointmentId}`;
         window.open(newTabUrl, '_blank');
     }
+
+  
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleButton = document.querySelector('.filter-toggle-button');
+        const filterForm = document.querySelector('.filter-form');
+
+        toggleButton.addEventListener('click', () => {
+            filterForm.classList.toggle('hidden'); // Показати/сховати форму
+        });
+    });
+
+document.getElementById('search-input').addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.animals-table tbody tr');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const searchColumns = [0, 1]; 
+        let match = false;
+
+        searchColumns.forEach(index => {
+            if (cells[index] && cells[index].innerText.toLowerCase().includes(filter)) {
+                match = true;
+            }
+        });
+
+        row.style.display = match ? '' : 'none';
+    });
+});
 </script>
+</html>

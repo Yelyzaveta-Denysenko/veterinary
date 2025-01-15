@@ -7,7 +7,7 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -139,3 +139,252 @@ footer {
     color: #333;
     font-size: 0.9rem;
 }
+
+
+
+/* Для кнопки сортування з випадаючим меню */
+.sort-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.sort-dropdown .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 150px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.sort-dropdown .dropdown-content a {
+    color: #333;
+    padding: 10px 15px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.9rem;
+}
+
+.sort-dropdown .dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.sort-dropdown:hover .dropdown-content {
+    display: block;
+}
+
+
+
+
+
+
+/* Основні стилі */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background-color: #0078d7;
+    color: white;
+    padding: 10px 0;
+}
+
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+}
+
+.header-title {
+    font-size: 1.5rem;
+}
+
+/* Основний контент */
+main {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+h1, h2 {
+    color: #0078d7;
+}
+
+/* Форми */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input, select, button {
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #0078d7;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #005bb5;
+}
+
+/* Кнопки */
+.btn-finish {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.btn-finish:hover {
+    background-color: #218838;
+}
+
+
+
+
+
+
+
+
+
+.filter-container {
+    width: 50%;
+    margin: 20px 0;
+    background-color: transparent !important; /* Прозорий фон */
+    box-shadow: none;
+    padding: 0;
+    border: none; /* Забираємо бордюри, якщо вони є */
+}
+
+
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: left;
+    justify-content: space-between;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-group label {
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.filter-group input[type="date"],
+.filter-group select {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 98%;
+}
+
+.filter-group select {
+    cursor: pointer;
+}
+
+.action-button {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: white;
+    background-color: #0078d7;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.action-button:hover {
+    background-color: #005bb5;
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .filter-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .action-button {
+        width: 100%;
+    }
+}
+.hidden {
+    display: none;
+}
+
+.filter-container {
+    width: 50%;
+    padding: 20px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+}
+
+.filter-toggle-button {
+    padding: 10px 15px;
+    background-color: #0078d7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.filter-toggle-button:hover {
+    background-color: #005bb5;
+}
+

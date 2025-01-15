@@ -11,7 +11,6 @@
 
     <main class="main-content container">
         <h2>Редагування інформації про послугу</h2>
-        <!-- Action goes to your update-service route, using the service.services_id as a parameter -->
         <form class="form-container" action="/update-service/<%= service.services_id %>" method="POST">
             
             <label for="id">Ідентифікатор:</label>
@@ -49,10 +48,6 @@
                 value="<%= service.price %>" 
                 required
             >
-
-            <!-- If duration is stored as TEXT or INTERVAL. 
-                 If it's text, you can just put service.duration.
-                 If you store it differently, parse or format as needed. -->
             <label for="duration">Тривалість (HH:MM:SS):</label>
             <input 
                 type="text" 

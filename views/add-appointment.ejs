@@ -30,21 +30,36 @@
                 <% }) %>
             </select>
 
-            <!-- NEW: Vet dropdown -->
-            <label for="vet_id">Ветеринар:</label>
-            <select id="vet_id" name="vet_id" required>
-                <% vets.forEach(vet => { %>
-                    <option value="<%= vet.vet_id %>">
-                        <%= vet.last_name %> <%= vet.first_name %> (ID: <%= vet.vet_id %>)
-                    </option>
-                <% }) %>
-            </select>
+<label for="vet_id">Ветеринар:</label>
+<select id="vet_id" name="vet_id" required>
+    <option value="" disabled selected>Оберіть ветеринара</option>
+    <% vets.forEach(vet => { %>
+        <option value="<%= vet.vet_id %>">
+            <%= vet.last_name %> <%= vet.first_name %> - <%= vet.specialization %>
+        </option>
+    <% }) %>
+</select>
 
-            <label for="appointment_date">Дата:</label>
-            <input type="date" id="appointment_date" name="appointment_date" required>
 
-            <label for="appointment_time">Час:</label>
-            <input type="time" id="appointment_time" name="appointment_time" required>
+            <label for="appointment_date">Дата запису на прийом:</label>
+            <input type="date" id="appointment_date" name="appointment_date" required min="" max="">
+    
+            <script>
+                function setAppointmentDateLimits() {
+                    const today = new Date(); 
+                    const minDate = today.toISOString().split('T')[0]; 
+                    const maxDate = new Date(today.setMonth(today.getMonth() + 3)).toISOString().split('T')[0]; // Дата через 3 місяці як максимальна
+            
+                    const appointmentInput = document.getElementById('appointment_date');
+                    appointmentInput.min = minDate;
+                    appointmentInput.max = maxDate;
+                }
+        
+                window.onload = setAppointmentDateLimits;
+            </script>
+
+            <label for="appointment_time">Час</label>
+            <input type="time" id="appointment_time" name="appointment_time" required min="10:00" max="18:00">
 
             <button type="submit" class="submit-button">Створити</button>
         </form>
@@ -61,7 +76,6 @@
         const dd = String(today.getDate()).padStart(2, '0');
         const minDate = `${yyyy}-${mm}-${dd}`;
 
-        // Вираховуємо дату через 3 місяці
         const maxDateObj = new Date(today);
         maxDateObj.setMonth(maxDateObj.getMonth() + 3);
         const maxYyyy = maxDateObj.getFullYear();
@@ -79,7 +93,6 @@
             const selectedDate = new Date(appointmentDateInput.value);
             const currentDate = new Date();
             if (selectedDate.toDateString() === currentDate.toDateString()) {
-                // Якщо вибрано сьогоднішній день, обмежити час з урахуванням поточного часу
                 const currentHour = currentDate.getHours();
                 const currentMinutes = currentDate.getMinutes();
                 const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
@@ -107,7 +120,6 @@
             const selectedDate = new Date(appointmentDateInput.value);
             const currentDate = new Date();
             if (selectedDate.toDateString() === currentDate.toDateString()) {
-                // Якщо вибрано сьогоднішній день, обмежити час з урахуванням поточного часу
                 const currentHour = currentDate.getHours();
                 const currentMinutes = currentDate.getMinutes();
                 const currentTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;

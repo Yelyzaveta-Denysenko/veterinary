@@ -10,15 +10,20 @@
     <%- include('partials/header') %>
 
     <main class="main-content container">
-        <form action="/search" method="GET" class="search-form">
-            <label for="search-id">Пошук за ID:</label>
-            <input type="text" id="search-id" name="id" placeholder="Введіть ID">
-            <button type="submit" class="search-button">Шукати</button>
-        </form>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Пошук..." class="search-box">
+         </div>
 
         <div class="main-header">
             <h2>Список тварин</h2>
             <a href="/add-animal" class="add-button">Додати Тварину</a>
+            <div class="sort-dropdown">
+                <button class="action-button" id="sort-button">Сортувати за датою народження</button>
+                <div class="dropdown-content" id="dropdown-content">
+                    <a href="#" data-sort="asc">За зростанням</a>
+                    <a href="#" data-sort="desc">За спаданням</a>
+                </div>
+            </div>
         </div>
         <table class="animals-table">
             <thead>
@@ -29,7 +34,7 @@
                     <th>Дата народження</th>
                     <th>Стать</th>
                     <th>Вакцинація</th>
-                    <th>Власник</th> <!-- NEW COLUMN -->
+                    <th>Власник</th>
                     <th>Дії</th>
                 </tr>
             </thead>
@@ -52,7 +57,7 @@
                         <td><%= animal.gender %></td>
                         <td><%= animal.vaccination ? "Так" : "Ні" %></td>
         
-                        <!-- OWNER INFO -->
+                        
                         <td>
                             <% if (animal.owners_id) { %>
                                 <%= animal.owner_last_name %> <%= animal.owner_first_name %>
@@ -61,7 +66,6 @@
                             <% } %>
                         </td>
         
-                        <!-- ACTIONS -->
                         <td>
                             <a href="/animal-history/<%= animal.animals_id %>" class="action-button1">Історія</a>
                             <a href="/update/<%= animal.animals_id %>" class="action-button">Оновити</a>
@@ -77,4 +81,50 @@
 
     <%- include('partials/footer') %>
 </body>
+
+
+<script>
+    document.querySelectorAll('.dropdown-content a').forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault(); 
+
+            const sortOrder = event.target.getAttribute('data-sort'); 
+            const tableBody = document.querySelector('.animals-table tbody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+            rows.sort((rowA, rowB) => {
+                const dateA = new Date(rowA.cells[3].innerText.split('-').reverse().join('-'));
+                const dateB = new Date(rowB.cells[3].innerText.split('-').reverse().join('-'));
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA; 
+                  });
+
+            tableBody.innerHTML = '';
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+    });
+
+
+
+    document.getElementById('search-input').addEventListener('input', function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.animals-table tbody tr');
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const searchColumns = [0, 1, 2, 6]; 
+            let match = false;
+
+            searchColumns.forEach(index => {
+                if (cells[index] && cells[index].innerText.toLowerCase().includes(filter)) {
+                    match = true;
+                }
+            });
+
+            row.style.display = match ? '' : 'none';
+        });
+    });
+
+
+</script>
 </html>
+

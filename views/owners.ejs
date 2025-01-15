@@ -7,14 +7,12 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <%- include('partials/header') %> <!-- or inline header if not using partials -->
+    <%- include('partials/header') %> 
     
     <main class="main-content container">
-        <form action="/owners" method="GET" class="search-form">
-            <label for="search-id">Пошук за ID власника:</label>
-            <input type="text" id="search-id" name="owner_id" placeholder="Введіть ID">
-            <button type="submit" class="search-button">Шукати</button>
-        </form>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Пошук..." class="search-box">
+    </div>
 
         <div class="main-header">
             <h2>Список власників</h2>
@@ -43,11 +41,9 @@
                         <td><%= owner.address %></td>
                         <td><%= owner.email %></td>
                         <td>
-                            <!-- Update link -->
                             <a href="/update-owner/<%= owner.owners_id %>" class="action-button">
                                 Редагувати
                             </a>
-                            <!-- Delete form -->
                             <form 
                                 action="/delete-owner/<%= owner.owners_id %>" 
                                 method="POST" 
@@ -64,4 +60,25 @@
 
     <%- include('partials/footer') %>
 </body>
+
+<script>    
+document.getElementById('search-input').addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.animals-table tbody tr');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const searchColumns = [1, 2, 3]; 
+        let match = false;
+
+        searchColumns.forEach(index => {
+            if (cells[index] && cells[index].innerText.toLowerCase().includes(filter)) {
+                match = true;
+            }
+        });
+
+        row.style.display = match ? '' : 'none';
+    });
+});
+</script>
 </html>

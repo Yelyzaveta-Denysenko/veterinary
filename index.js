@@ -9,18 +9,14 @@ const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 
 
-// This function will create a PDF in memory, returning a Buffer
 async function generateAppointmentPDF(appointment) {
     return new Promise((resolve, reject) => {
-        // Create a new PDF document
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-         // Register your custom font
         doc.registerFont('DejaVu', 'public/fonts/DejaVuSans.ttf');
         
-        doc.font('DejaVu'); // Tell pdfkit to use this font for subsequent text
+        doc.font('DejaVu'); 
 
-        // Collect the PDF in a buffer
         let buffers = [];
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => {
@@ -29,20 +25,16 @@ async function generateAppointmentPDF(appointment) {
         });
         doc.on('error', reject);
 
-        // --- PDF content: you can replicate your site’s style with colors, fonts, etc. ---
         doc.fontSize(20).fillColor('#0078d7').text('VetAN - Підсумок прийому', { align: 'center' });
         doc.moveDown();
 
-        // Basic info
         doc.fontSize(14).fillColor('#000');
         doc.text(`Ідентифікатор прийому: ${appointment.appointment_id}`, { lineGap: 4 });
         doc.text(`Тварина: ${appointment.animal_name} (${appointment.breed}, ${appointment.gender})`, { lineGap: 4 });
 
         const dateObj = new Date(appointment.appointment_date);
-        // "2025-01-03T00:00:00.000Z" ...
         const isoString = dateObj.toISOString(); 
-        // Take just the date part ("YYYY-MM-DD") from the ISO string
-        const onlyDate = isoString.split("T")[0]; // "2025-01-03"
+        const onlyDate = isoString.split("T")[0]; 
 
         doc.text(`Дата прийому: ${onlyDate}`, { lineGap: 4 });
 
@@ -55,7 +47,6 @@ async function generateAppointmentPDF(appointment) {
         doc.text(`Діагноз: ${appointment.diagnosis || 'Немає даних'}`, { lineGap: 3 });
         doc.text(`Лікування: ${appointment.treatment || 'Немає даних'}`, { lineGap: 3 });
         doc.text(`Препарати: ${appointment.preparations || 'Немає даних'}`, { lineGap: 3 });
-        // Suppose 'appointment' is the row from the query above
         doc.fontSize(12).text(`Ветеринар: ${appointment.vet_last_name} ${appointment.vet_first_name}`, { lineGap: 4 });
         doc.text(`Спеціалізація: ${appointment.vet_specialization || 'Немає даних'}`, { lineGap: 4 });
 
@@ -66,10 +57,6 @@ async function generateAppointmentPDF(appointment) {
         doc.text(`Метод оплати: ${appointment.payment_method || 'N/A'}`, { lineGap: 3 });
         doc.text(`Повна вартість послуги: ${appointment.service_cost || 'N/A'} грн`, { lineGap: 3 });
 
-        // If you want to display the estimated vs. actual time
-        // doc.text(`Початок: ${appointment.status_start_time}`);
-        // doc.text(`Кінець: ${appointment.status_end_time}`);
-
         doc.end();
     });
 }
@@ -77,8 +64,8 @@ async function generateAppointmentPDF(appointment) {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'anton.reshetniak@nure.ua',
-        pass: 'imbg gyxz wyqq ytfw'
+        user: 'yelyzaveta.denysenko@nure.ua',
+        pass: 'isvp ylin dqsy enqo'
     }
 });
 
@@ -96,13 +83,12 @@ async function emailAppointmentSummary(appointment, pdfBuffer) {
         attachments: [
             {
                 filename: `Appointment_${appointment.appointment_id}.pdf`,
-                content: pdfBuffer, // Buffer containing the PDF
+                content: pdfBuffer, 
                 contentType: 'application/pdf'
             }
         ]
     };
 
-    // Send the email
     await transporter.sendMail(mailOptions);
     console.log('Email sent successfully!');
 }
@@ -134,7 +120,6 @@ app.get("/", async (req, res) => {
 
     const { animal_id } = req.query;
 
-    // LEFT JOIN with owners to display short info about the owner
     let query = `
         SELECT 
             a.animals_id, 
@@ -152,7 +137,6 @@ app.get("/", async (req, res) => {
     `;
     const params = [];
 
-    // Optional: filter by animal_id if user searches by ID
     if (animal_id) {
         query += ` WHERE a.animals_id = $1`;
         params.push(animal_id); 
@@ -172,7 +156,6 @@ app.get("/add-animal", async (req, res) => {
     console.log("GET /add-animal");
 
     try {
-        // Fetch the list of owners
         const ownersResult = await runDBCommand({
             text: "SELECT owners_id, last_name, first_name FROM veterinary.owners ORDER BY last_name",
         });
@@ -189,7 +172,6 @@ app.post("/add-animal", async (req, res) => {
     const { name, breed, birthday, gender, vaccination, owners_id } = req.body;
     const isVaccinated = (vaccination === "Так");
 
-    // Convert empty string to null if not chosen
     const ownerIdValue = owners_id ? owners_id : null;
 
     const query = `
@@ -249,7 +231,6 @@ app.get("/update/:animals_id", async (req, res) => {
     const animalId = req.params.animals_id;
 
     try {
-        // Fetch the animal we want to update
         const animalQuery = `
             SELECT * 
             FROM veterinary.animals 
@@ -265,7 +246,6 @@ app.get("/update/:animals_id", async (req, res) => {
         }
         const animal = animalResult.rows[0];
 
-        // Fetch all owners to populate a dropdown
         const ownersQuery = `
             SELECT owners_id, last_name, first_name 
             FROM veterinary.owners 
@@ -275,7 +255,6 @@ app.get("/update/:animals_id", async (req, res) => {
             text: ownersQuery
         });
 
-        // Render the EJS, passing both the animal and the list of owners
         res.render("update-animal", {
             animal,
             owners: ownersResult.rows
@@ -291,7 +270,6 @@ app.post("/update/:animals_id", async (req, res) => {
     const { name, breed, birthday, gender, vaccination, owners_id } = req.body;
     const isVaccinated = (vaccination === "Так");
 
-    // Convert empty string (if user chooses no owner) to null
     const ownerIdValue = owners_id ? owners_id : null;
 
     const query = `
@@ -381,36 +359,55 @@ app.post("/add-appointment", async (req, res) => {
 });
 
 app.get("/appointments", async (req, res) => {
-    const filterStatus = req.query.status;
+    const { status, start_date, end_date } = req.query;
+
+    let query = `
+        SELECT 
+            ap.appointment_id as id,
+            an.name as animal_name,
+            se.services_name as service_name,
+            ap.appointment_date as date,
+            ap.appointment_time as time,
+            ap.status            
+        FROM veterinary.appointment ap
+        LEFT JOIN veterinary.animals an
+            on ap.animal_id = an.animals_id
+        LEFT JOIN veterinary.services se
+            on ap.services_id = se.services_id
+        WHERE 1=1
+    `;
+    const params = [];
+
+    if (status) {
+        query += ` AND ap.status = $${params.length + 1}`;
+        params.push(status);
+    }
+
+    if (start_date) {
+        query += ` AND ap.appointment_date >= $${params.length + 1}`;
+        params.push(start_date);
+    }
+
+    if (end_date) {
+        query += ` AND ap.appointment_date <= $${params.length + 1}`;
+        params.push(end_date);
+    }
 
     try {
-        const query = `
-            SELECT 
-                ap.appointment_id as id,
-                an.name as animal_name,
-                se.services_name as service_name,
-                ap.appointment_date as date,
-                ap.appointment_time as time,
-                ap.status            
-            FROM veterinary.appointment ap
-            LEFT JOIN veterinary.animals an
-                on ap.animal_id = an.animals_id
-            LEFT JOIN veterinary.services se
-                on ap.services_id = se.services_id
-        `;
-        
-        const data = await runDBCommand({ text: query });
+        const data = await runDBCommand({ text: query, values: params });
 
         res.render("appointments", {
             appointments: data.rows,
-            filterStatus: filterStatus
+            filterStatus: status || '',
+            startDate: start_date || '',
+            endDate: end_date || ''
         });
-
     } catch (error) {
         console.error("Помилка отримання даних для форми:", error);
         res.status(500).send("Помилка отримання даних для форми.");
     }
 });
+
 
 app.post('/appointments/start/:id', async (req, res) => {
     const appointmentId = req.params.id;
@@ -574,12 +571,13 @@ app.get('/appointments/payment/:id', async (req, res) => {
     }
 });
 
+
+
 app.post('/appointments/payment/submit/:id', async (req, res) => {
     const appointmentId = req.params.id;
     const { payment_method } = req.body;
 
     try {
-        // 1) Insert payment details
         const insertQuery = `
             INSERT INTO veterinary.financial_operation 
             (appointment_id, amount, operation_method, operation_date, operation_status)
@@ -592,7 +590,6 @@ app.post('/appointments/payment/submit/:id', async (req, res) => {
         `;
         await runDBCommand({ text: insertQuery, values: [appointmentId, payment_method] });
 
-        // 2) Update appointment status
         const updateQuery = `
             UPDATE veterinary.Appointment 
             SET status = 'Completed'
@@ -601,7 +598,6 @@ app.post('/appointments/payment/submit/:id', async (req, res) => {
         `;
         await runDBCommand({ text: updateQuery, values: [appointmentId] });
 
-        // 3) Fetch full appointment info for PDF/email
         const fullDataQuery = `
             SELECT 
                 a.appointment_id, a.appointment_date, a.appointment_time, a.status, 
@@ -625,13 +621,10 @@ app.post('/appointments/payment/submit/:id', async (req, res) => {
         const { rows } = await runDBCommand({ text: fullDataQuery, values: [appointmentId] });
         const appointment = rows[0];
 
-        // 4) Generate PDF
         const pdfBuffer = await generateAppointmentPDF(appointment);
 
-        // 5) Send the email (if owner_email exists)
         await emailAppointmentSummary(appointment, pdfBuffer);
 
-        // 6) Close the payment window
         res.send(`<script>window.close();</script>`);
     } catch (error) {
         console.error(error);
@@ -692,23 +685,14 @@ app.get('/appointments/details/:id', async (req, res) => {
     }
 });
 
-// app.get("/supplies", async (req, res) => {
-//     try {
-//         res.render("supplies");
-//     } catch (error) {
-//         console.error("Error fetching supplies report:", error);
-//         res.status(500).send("Error generating the report.");
-//     }
-// });
+
 
 app.get("/supplies", (req, res) => {
     res.render("supplies");
 });
 
-// MONTHLY REPORT
 app.get("/reports/monthly", async (req, res) => {
     try {
-        // 1) Run your monthly query
         const query = `
             WITH service_counts AS (
                 SELECT 
@@ -772,17 +756,14 @@ app.get("/reports/monthly", async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Місяці");
         
-        // 1) Row 1: Title, merged A1→I1
         worksheet.mergeCells("A1:I1");
         worksheet.getCell("A1").value = "Звітність за місяцями";
         worksheet.getCell("A1").font = { bold: true, size: 14 };
         
-        // 2) Row 2: Date, merged A2→I2
         worksheet.mergeCells("A2:I2");
         const now = new Date();
         worksheet.getCell("A2").value = `Дата формування: ${now.toLocaleString("uk-UA")}`;
         
-        // Row 3: actual column headers
         worksheet.addRow([
             "Рік",
             "Місяць",
@@ -795,7 +776,6 @@ app.get("/reports/monthly", async (req, res) => {
             "Найменш популярна послуга",
         ]);
   
-        // Suppose result.rows is your data
         result.rows.forEach(rowData => {
             worksheet.addRow([
             rowData.year,
@@ -810,7 +790,6 @@ app.get("/reports/monthly", async (req, res) => {
             ]);
         });
 
-        // 7) Send it as a downloadable Excel
         res.setHeader('Content-Disposition', 'attachment; filename="monthly-report.xlsx"');
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
@@ -852,17 +831,14 @@ app.get("/reports/services", async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Послуги');
 
-        // Title in cell A1
         worksheet.getCell('A1').value = 'Звітність за послугами';
         worksheet.getCell('A1').font = { bold: true, size: 14 };
         worksheet.mergeCells('A1:E1');
 
-        // Date in cell A2
         const now = new Date();
         worksheet.getCell('A2').value = `Дата формування: ${now.toLocaleString('uk-UA')}`;
         worksheet.mergeCells('A2:E2');
 
-        // Row 3: actual column headers
         worksheet.addRow([
             "Послуга",
             "Кількість записів",
@@ -929,12 +905,10 @@ app.get("/suppliers", async (req, res) => {
     }
 });
 
-// GET form to add new service
 app.get("/add-service", (req, res) => {
-    res.render("add-service");  // you'd create add-service.ejs
+    res.render("add-service");  
 });
 
-// POST to create new service
 app.post("/add-service", async (req, res) => {
     const { services_name, description, price, duration, service_category } = req.body;
     const query = `
@@ -953,7 +927,6 @@ app.post("/add-service", async (req, res) => {
     }
 });
 
-// GET form to update an existing service
 app.get("/update-service/:services_id", async (req, res) => {
     const serviceId = req.params.services_id;
     const query = `
@@ -976,14 +949,13 @@ app.get("/update-service/:services_id", async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).send("Service not found.");
         }
-        res.render("update-service", { service: rows[0] }); // you'd create update-service.ejs
+        res.render("update-service", { service: rows[0] }); 
     } catch (err) {
         console.error("Error fetching service data:", err);
         res.status(500).send("Error fetching service data.");
     }
 });
 
-// POST to update service details
 app.post("/update-service/:services_id", async (req, res) => {
     const serviceId = req.params.services_id;
     const { services_name, description, price, duration, service_category } = req.body;
@@ -1004,7 +976,6 @@ app.post("/update-service/:services_id", async (req, res) => {
     }
 });
 
-// POST to delete a service
 app.post("/delete-service/:services_id", async (req, res) => {
     const serviceId = req.params.services_id;
     const query = `DELETE FROM veterinary.services WHERE services_id = $1`;
@@ -1038,12 +1009,10 @@ app.get("/owners", async (req, res) => {
 });
 
 
-// GET form to add an owner
 app.get("/add-owner", (req, res) => {
     res.render("add-owner");
 });
 
-// POST form submission for new owner
 app.post("/add-owner", async (req, res) => {
     const { last_name, first_name, phone, address, email } = req.body;
 
@@ -1065,7 +1034,7 @@ app.post("/add-owner", async (req, res) => {
 });
 
 
-// GET form with existing owner data
+
 app.get("/update-owner/:owners_id", async (req, res) => {
     const ownerId = req.params.owners_id;
 
@@ -1078,7 +1047,6 @@ app.get("/update-owner/:owners_id", async (req, res) => {
         if (rows.length === 0) {
             return res.status(404).send("Власника не знайдено.");
         }
-        // Render update-owner.ejs, passing in the existing row
         res.render("update-owner", { owner: rows[0] });
     } catch (error) {
         console.error("Error fetching owner data:", error);
@@ -1086,7 +1054,6 @@ app.get("/update-owner/:owners_id", async (req, res) => {
     }
 });
 
-// POST to actually update the owner
 app.post("/update-owner/:owners_id", async (req, res) => {
     const ownerId = req.params.owners_id;
     const { last_name, first_name, phone, address, email } = req.body;
@@ -1117,7 +1084,6 @@ app.get("/attach-owner/:animals_id", async (req, res) => {
     const animalId = req.params.animals_id;
 
     try {
-        // 1) Get the animal info
         const animalResult = await runDBCommand({
             text: "SELECT * FROM veterinary.animals WHERE animals_id = $1",
             values: [animalId],
@@ -1127,12 +1093,10 @@ app.get("/attach-owner/:animals_id", async (req, res) => {
         }
         const animal = animalResult.rows[0];
 
-        // 2) Get the list of owners
         const ownersResult = await runDBCommand({
             text: "SELECT owners_id, last_name, first_name FROM veterinary.owners ORDER BY last_name",
         });
 
-        // 3) Render a form page
         res.render("attach-owner", {
             animal,
             owners: ownersResult.rows,
@@ -1178,12 +1142,10 @@ app.get("/veterinans", async (req, res) => {
     }
 });
 
-// GET - show form
 app.get("/add-vet", (req, res) => {
     res.render("add-vet");
 });
 
-// POST - insert new veterinarian
 app.post("/add-vet", async (req, res) => {
     const {
         last_name,
@@ -1224,7 +1186,6 @@ app.post("/add-vet", async (req, res) => {
     }
 });
 
-// GET - fetch existing vet data
 app.get("/update-vet/:vet_id", async (req, res) => {
     const vetId = req.params.vet_id;
 
@@ -1243,7 +1204,6 @@ app.get("/update-vet/:vet_id", async (req, res) => {
     }
 });
 
-// POST - update vet
 app.post("/update-vet/:vet_id", async (req, res) => {
     const vetId = req.params.vet_id;
     const {
@@ -1310,4 +1270,15 @@ app.post("/delete-vet/:vet_id", async (req, res) => {
 app.listen(3000, () => {
     console.log("Server is running on port 3000");
 });
+
+
+
+
+
+
+
+
+
+
+
 

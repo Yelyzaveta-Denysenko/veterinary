@@ -7,11 +7,9 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <!-- Header partial or inline -->
     <%- include('partials/header') %>
 
     <main class="main-content container">
-        <!-- Search form (by service ID) -->
         <form action="/suppliers" method="GET" class="search-form">
             <label for="service-id">Пошук за ID послуги:</label>
             <input type="text" id="service-id" name="service_id" placeholder="Введіть ID">
@@ -20,9 +18,17 @@
 
         <div class="main-header">
             <h2>Список послуг</h2>
-            <!-- Link to page for adding new service (you’d create this route/form) -->
             <a href="/add-service" class="add-button">Додати Послугу</a>
+            <div class="sort-dropdown">
+                <button class="action-button" id="sort-button">Сортувати за ціною</button>
+                <div class="dropdown-content" id="dropdown-content">
+                    <a href="#" data-sort="asc">За зростанням</a>
+                    <a href="#" data-sort="desc">За спаданням</a>
+                </div>
+            </div>
         </div>
+        
+
 
         <table class="animals-table">
             <thead>
@@ -46,10 +52,8 @@
                         <td><%= service.duration %></td>
                         <td><%= service.service_category %></td>
                         <td>
-                            <!-- Example link to update page -->
                             <a href="/update-service/<%= service.services_id %>" class="action-button">Оновити</a>
 
-                            <!-- Example form to delete a service -->
                             <form action="/delete-service/<%= service.services_id %>" method="POST" style="display:inline;">
                                 <button type="submit" class="delete-button">Видалити</button>
                             </form>
@@ -60,7 +64,39 @@
         </table>
     </main>
 
-    <!-- Footer partial or inline -->
     <%- include('partials/footer') %>
 </body>
+<script>
+    document.querySelectorAll('.dropdown-content a').forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            const sortOrder = event.target.getAttribute('data-sort'); 
+            const tableBody = document.querySelector('.animals-table tbody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+            rows.sort((rowA, rowB) => {
+                const priceA = parseFloat(rowA.cells[3].innerText.replace(/\D/g, '')) || 0;
+                const priceB = parseFloat(rowB.cells[3].innerText.replace(/\D/g, '')) || 0;
+
+                return sortOrder === 'asc' ? priceA - priceB : priceB - priceA;
+            });
+
+            tableBody.innerHTML = '';
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+    });
+    const sortButton = document.getElementById('sort-button');
+    const dropdownContent = document.getElementById('dropdown-content');
+
+    sortButton.addEventListener('click', () => {
+        const isVisible = dropdownContent.style.display === 'block';
+        dropdownContent.style.display = isVisible ? 'none' : 'block';
+    });
+    document.addEventListener('click', (event) => {
+        if (!sortButton.contains(event.target) && !dropdownContent.contains(event.target)) {
+            dropdownContent.style.display = 'none';
+        }
+    });
+</script>
 </html>

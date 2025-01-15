@@ -10,16 +10,20 @@
     <%- include('partials/header') %>
 
     <main class="main-content container">
-        <!-- Search form by vet_id -->
-        <form action="/veterinans" method="GET" class="search-form">
-            <label for="search-id">Пошук за ID ветеринара:</label>
-            <input type="text" id="search-id" name="vet_id" placeholder="Введіть ID">
-            <button type="submit" class="search-button">Шукати</button>
-        </form>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Пошук..." class="search-box">
+         </div>
 
         <div class="main-header">
             <h2>Список ветеринарів</h2>
             <a href="/add-vet" class="add-button">Додати Ветеринара</a>
+            <div class="sort-dropdown">
+                <button class="action-button" id="sort-button">Сортувати за досвідом</button>
+                <div class="dropdown-content" id="dropdown-content">
+                    <a href="#" data-sort="asc">За зростанням</a>
+                    <a href="#" data-sort="desc">За спаданням</a>
+                </div>
+            </div>
         </div>
 
         <table class="animals-table">
@@ -63,4 +67,45 @@
 
     <%- include('partials/footer') %>
 </body>
+
+<script>  
+document.getElementById('search-input').addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.animals-table tbody tr');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const searchColumns = [0, 1, 5]; 
+        let match = false;
+
+        searchColumns.forEach(index => {
+            if (cells[index] && cells[index].innerText.toLowerCase().includes(filter)) {
+                match = true;
+            }
+        });
+
+        row.style.display = match ? '' : 'none';
+    });
+});
+
+document.querySelectorAll('.dropdown-content a').forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            const sortOrder = event.target.getAttribute('data-sort'); 
+            const tableBody = document.querySelector('.animals-table tbody'); 
+            const rows = Array.from(tableBody.querySelectorAll('tr')); 
+
+            rows.sort((rowA, rowB) => {
+                const experienceA = parseInt(rowA.cells[4].innerText, 10) || 0; 
+                const experienceB = parseInt(rowB.cells[4].innerText, 10) || 0;
+
+                return sortOrder === 'asc' ? experienceA - experienceB : experienceB - experienceA; 
+            });
+
+            tableBody.innerHTML = '';
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+    });
+</script>
 </html>

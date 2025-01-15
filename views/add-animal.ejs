@@ -19,7 +19,18 @@
             <input type="text" id="breed" name="breed" required>
         
             <label for="birthday">Дата народження тварини:</label>
-            <input type="date" id="birthday" name="birthday" required>
+            <input type="date" id="birthday" name="birthday" required max="" min="" >
+            <script>
+                function setBirthdayLimits() {
+                    const today = new Date();
+                    const maxDate = today.toISOString().split('T')[0];
+                    const minDate = new Date(today.setFullYear(today.getFullYear() - 100)).toISOString().split('T')[0]; // 100 років тому
+                    const birthdayInput = document.getElementById('birthday');
+                    birthdayInput.max = maxDate;
+                    birthdayInput.min = minDate;
+                }
+                window.onload = setBirthdayLimits;
+            </script>
         
             <label for="gender">Стать тварини:</label>
             <select id="gender" name="gender" required>
@@ -33,7 +44,6 @@
                 <option value="Ні">Ні</option>
             </select>
         
-            <!-- NEW FIELD: OWNER -->
             <label for="owners_id">Власник (необов'язково):</label>
             <select id="owners_id" name="owners_id">
                 <option value="">Без власника</option>
